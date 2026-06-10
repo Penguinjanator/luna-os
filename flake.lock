@@ -1,5 +1,21 @@
 {
   "nodes": {
+    "luna-kernel": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1781075944,
+        "narHash": "sha256-4CJNhV5IoXya0iEVtK24Nm1kZaocqPRsbLp9O311OpA=",
+        "ref": "refs/heads/main",
+        "rev": "bec8a89462348a03bb478bd197684e03b974c883",
+        "revCount": 1,
+        "type": "git",
+        "url": "file:///home/potato/work-code/linux-master"
+      },
+      "original": {
+        "type": "git",
+        "url": "file:///home/potato/work-code/linux-master"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1780749050,
@@ -18,6 +34,7 @@
     },
     "root": {
       "inputs": {
+        "luna-kernel": "luna-kernel",
         "nixpkgs": "nixpkgs"
       }
     }
