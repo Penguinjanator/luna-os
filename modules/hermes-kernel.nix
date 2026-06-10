@@ -27,6 +27,12 @@ in
   # pulls ZFS in by default, so disable it for anything on our custom kernel.
   boot.supportedFilesystems.zfs = lib.mkForce false;
 
+  # The installer ISO's all-hardware profile lists ~88 storage/RAID drivers
+  # (3w-9xxx, megaraid, …) for max compatibility. Our kernel covers consumer
+  # hardware but not every enterprise controller — so tolerate the missing ones
+  # rather than fail module-shrink; the drivers we DO have still get included.
+  boot.initrd.allowMissingModules = true;
+
   # hermes-kernel.config now ships broad hardware support — NVMe, Wi-Fi,
   # AMD/Nvidia/Intel GPU, common filesystems, the virtio drivers the VM needs,
   # AND every module in NixOS's default initrd set (SATA/USB glue + HID quirk

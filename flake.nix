@@ -57,6 +57,18 @@
             isoProfile
             ./modules/luna.nix
             ./modules/hermes-kernel.nix
+            # The live ISO used to die at the store-squashfs mount on our kernel.
+            # Root cause was a kernel .config gap, NOT the initrd: NixOS mounts the
+            # store with `-o threads=multi`, and that mount option only exists when
+            # CONFIG_SQUASHFS_CHOICE_DECOMP_BY_MOUNT=y. Our config shipped only
+            # SQUASHFS_DECOMP_SINGLE, so squashfs rejected `threads=multi` with
+            # EINVAL ("bad option") *before* reading the superblock — which is why
+            # there was never a "SQUASHFS error" line, and why a manual mount
+            # without that option succeeded. Fixed in hermes-kernel.config.
+            #
+            # We still pin the classic scripted stage-1: systemd-initrd hasn't been
+            # validated against our kernel yet (revisit once the ISO boots clean).
+            { boot.initrd.systemd.enable = nixpkgs.lib.mkForce false; }
           ];
         };
       };
