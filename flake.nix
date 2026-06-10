@@ -54,16 +54,12 @@
         lab = [ ./modules/hermes-kernel.nix ];
       };
 
-      # Lab-kernel ISO fixup: pin the classic scripted stage-1.
-      #
-      # The live ISO used to die at the store-squashfs mount on our kernel. Root
-      # cause was a kernel .config gap, NOT the initrd: NixOS mounts the store
-      # with `-o threads=multi`, an option that only exists when
-      # CONFIG_SQUASHFS_CHOICE_DECOMP_BY_MOUNT=y. Our config shipped only
-      # SQUASHFS_DECOMP_SINGLE, so squashfs rejected it with EINVAL ("bad option")
-      # before ever reading the superblock — fixed in hermes-kernel.config. We
-      # still pin scripted stage-1 until systemd-initrd is validated on our kernel.
-      labIsoStage1 = { boot.initrd.systemd.enable = lib.mkForce false; };
+      # NOTE: lab ISOs run the default systemd-initrd — no scripted-stage-1 pin.
+      # They once needed scripted stage-1 to boot, but that only masked a kernel
+      # .config gap: NixOS mounts the live store with `-o threads=multi`, an option
+      # that exists only when CONFIG_SQUASHFS_CHOICE_DECOMP_BY_MOUNT=y. With that
+      # enabled in hermes-kernel.config, systemd-initrd assembles the store mount
+      # fine, so the workaround is gone (scripted initrd is deprecated anyway).
 
       # Live desktop ISOs autologin the installer's `nixos` user straight into the
       # session — blank-password GUI login is awkward otherwise. (Matches how
@@ -87,7 +83,6 @@
             ++ [ ./modules/luna.nix ]
             ++ kernelLayer.${kernel}
             ++ desktopLayer.${desktop}
-            ++ lib.optional (target == "iso" && kernel == "lab") labIsoStage1
             ++ lib.optional (target == "iso" && desktop != "terminal") isoDesktopAutologin
             # A headless VM of a desktop is pointless — give desktop VM variants a
             # real graphical window (no effect on the ISO or installed system).
