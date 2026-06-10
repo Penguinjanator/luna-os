@@ -14,71 +14,135 @@
     };
   };
 
+  # luna-os is built as a MATRIX, not a handful of hand-written systems:
+  #
+  #     kernel   {stock, lab}      x  desktop {terminal, gnome, kde}  x  target {system, iso}
+  #
+  # `stock`  = the nixpkgs kernel (boots real hardware today).
+  # `lab`    = our custom 7.1.0-rc7 kernel (modules/hermes-kernel.nix).
+  # desktop  = the "flavor" — exactly how upstream NixOS ships its installers
+  #            (separate per-desktop images); terminal = no desktop.
+  # target   = an installable/VM `system`, or a live `iso`.
+  #
+  # Every point shares modules/luna.nix (identity + base userland + dev langs),
+  # so the whole grid is generated from one `mkSystem` function below. Names stay
+  # backward compatible: luna-os, luna-os-lab, luna-os-iso, luna-os-lab-iso are
+  # the terminal points; desktops add a -gnome / -kde infix.
   outputs =
     { self, nixpkgs, luna-kernel, ... }:
     let
       system = "x86_64-linux";
-      commonModules = [
-        ./configuration.nix
-        ./modules/luna.nix
-      ];
+      lib = nixpkgs.lib;
+
       isoProfile = "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix";
+
+      # ---- the three axes of the matrix ----
+      kernels = [ "stock" "lab" ];
+      desktops = [ "terminal" "gnome" "kde" ];
+      targets = [ "system" "iso" ];
+
+      # Desktop layers; "terminal" adds nothing.
+      desktopLayer = {
+        terminal = [ ];
+        gnome = [ ./modules/desktops/gnome.nix ];
+        kde = [ ./modules/desktops/kde.nix ];
+      };
+
+      # Kernel layers; "stock" = nixpkgs kernel, "lab" = our 7.1.0-rc7.
+      kernelLayer = {
+        stock = [ ];
+        lab = [ ./modules/hermes-kernel.nix ];
+      };
+
+      # Lab-kernel ISO fixup: pin the classic scripted stage-1.
+      #
+      # The live ISO used to die at the store-squashfs mount on our kernel. Root
+      # cause was a kernel .config gap, NOT the initrd: NixOS mounts the store
+      # with `-o threads=multi`, an option that only exists when
+      # CONFIG_SQUASHFS_CHOICE_DECOMP_BY_MOUNT=y. Our config shipped only
+      # SQUASHFS_DECOMP_SINGLE, so squashfs rejected it with EINVAL ("bad option")
+      # before ever reading the superblock — fixed in hermes-kernel.config. We
+      # still pin scripted stage-1 until systemd-initrd is validated on our kernel.
+      labIsoStage1 = { boot.initrd.systemd.enable = lib.mkForce false; };
+
+      # Live desktop ISOs autologin the installer's `nixos` user straight into the
+      # session — blank-password GUI login is awkward otherwise. (Matches how
+      # NixOS's own graphical installer images behave.)
+      isoDesktopAutologin = {
+        services.displayManager.autoLogin = {
+          enable = true;
+          user = "nixos";
+        };
+      };
+
+      # Build one nixosSystem for a {kernel, desktop, target} point in the matrix.
+      mkSystem = { kernel, desktop, target }:
+        lib.nixosSystem {
+          inherit system;
+          # Only the lab kernel module needs the kernel source as a specialArg.
+          specialArgs = lib.optionalAttrs (kernel == "lab") { inherit luna-kernel; };
+          modules =
+            # A "system" is the installable/VM base; an "iso" is the live image.
+            (if target == "iso" then [ isoProfile ] else [ ./configuration.nix ])
+            ++ [ ./modules/luna.nix ]
+            ++ kernelLayer.${kernel}
+            ++ desktopLayer.${desktop}
+            ++ lib.optional (target == "iso" && kernel == "lab") labIsoStage1
+            ++ lib.optional (target == "iso" && desktop != "terminal") isoDesktopAutologin
+            # A headless VM of a desktop is pointless — give desktop VM variants a
+            # real graphical window (no effect on the ISO or installed system).
+            ++ lib.optional (target == "system" && desktop != "terminal") {
+              virtualisation.vmVariant.virtualisation.graphics = lib.mkForce true;
+            };
+        };
+
+      # luna-os[-lab][-gnome|-kde][-iso]
+      sysName = { kernel, desktop, target }:
+        "luna-os"
+        + lib.optionalString (kernel == "lab") "-lab"
+        + lib.optionalString (desktop != "terminal") "-${desktop}"
+        + lib.optionalString (target == "iso") "-iso";
+
+      # vm[-lab][-gnome|-kde] / iso[-lab][-gnome|-kde]
+      pkgName = prefix: { kernel, desktop }:
+        prefix
+        + lib.optionalString (kernel == "lab") "-lab"
+        + lib.optionalString (desktop != "terminal") "-${desktop}";
+
+      # every {kernel, desktop, target} point of the grid
+      matrix = lib.concatMap
+        (kernel: lib.concatMap
+          (desktop: map (target: { inherit kernel desktop target; }) targets)
+          desktops)
+        kernels;
+
+      # every {kernel, desktop} point (used to name the build targets)
+      flavors = lib.concatMap
+        (kernel: map (desktop: { inherit kernel desktop; }) desktops)
+        kernels;
     in
     {
-      nixosConfigurations = {
-        # Daily driver: stock nixpkgs kernel.
-        luna-os = nixpkgs.lib.nixosSystem {
-          inherit system;
-          modules = commonModules;
-        };
+      nixosConfigurations = lib.listToAttrs (map
+        (pt: { name = sysName pt; value = mkSystem pt; })
+        matrix);
 
-        # Research track: our own 7.1.0-rc7 kernel (luna-os-kernel).
-        luna-os-lab = nixpkgs.lib.nixosSystem {
-          inherit system;
-          specialArgs = { inherit luna-kernel; };
-          modules = commonModules ++ [ ./modules/hermes-kernel.nix ];
-        };
-
-        # Installable live ISO (stock kernel — boots real hardware today).
-        luna-os-iso = nixpkgs.lib.nixosSystem {
-          inherit system;
-          modules = [
-            isoProfile
-            ./modules/luna.nix
-          ];
-        };
-
-        # Installable live ISO on our custom kernel. VM-only until the kernel
-        # gains real-hardware drivers (see modules/hermes-kernel.nix).
-        luna-os-lab-iso = nixpkgs.lib.nixosSystem {
-          inherit system;
-          specialArgs = { inherit luna-kernel; };
-          modules = [
-            isoProfile
-            ./modules/luna.nix
-            ./modules/hermes-kernel.nix
-            # The live ISO used to die at the store-squashfs mount on our kernel.
-            # Root cause was a kernel .config gap, NOT the initrd: NixOS mounts the
-            # store with `-o threads=multi`, and that mount option only exists when
-            # CONFIG_SQUASHFS_CHOICE_DECOMP_BY_MOUNT=y. Our config shipped only
-            # SQUASHFS_DECOMP_SINGLE, so squashfs rejected `threads=multi` with
-            # EINVAL ("bad option") *before* reading the superblock — which is why
-            # there was never a "SQUASHFS error" line, and why a manual mount
-            # without that option succeeded. Fixed in hermes-kernel.config.
-            #
-            # We still pin the classic scripted stage-1: systemd-initrd hasn't been
-            # validated against our kernel yet (revisit once the ISO boots clean).
-            { boot.initrd.systemd.enable = nixpkgs.lib.mkForce false; }
-          ];
-        };
-      };
-
-      # nix build .#vm | .#vm-lab | .#iso | .#iso-lab
-      packages.${system} = {
-        vm = self.nixosConfigurations.luna-os.config.system.build.vm;
-        vm-lab = self.nixosConfigurations.luna-os-lab.config.system.build.vm;
-        iso = self.nixosConfigurations.luna-os-iso.config.system.build.isoImage;
-        iso-lab = self.nixosConfigurations.luna-os-lab-iso.config.system.build.isoImage;
-      };
+      # Build targets — one VM + one ISO per flavor:
+      #   nix build .#vm | .#vm-gnome | .#vm-kde | .#vm-lab | .#vm-lab-gnome | .#vm-lab-kde
+      #   nix build .#iso | .#iso-gnome | .#iso-kde | .#iso-lab | .#iso-lab-gnome | .#iso-lab-kde
+      packages.${system} = lib.listToAttrs (
+        (map
+          (f: {
+            name = pkgName "vm" f;
+            value = self.nixosConfigurations.${sysName (f // { target = "system"; })}.config.system.build.vm;
+          })
+          flavors)
+        ++
+        (map
+          (f: {
+            name = pkgName "iso" f;
+            value = self.nixosConfigurations.${sysName (f // { target = "iso"; })}.config.system.build.isoImage;
+          })
+          flavors)
+      );
     };
 }
