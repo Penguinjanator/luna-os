@@ -27,10 +27,15 @@ in
   # pulls ZFS in by default, so disable it for anything on our custom kernel.
   boot.supportedFilesystems.zfs = lib.mkForce false;
 
-  # The installer ISO's all-hardware profile lists ~88 storage/RAID drivers
-  # (3w-9xxx, megaraid, …) for max compatibility. Our kernel covers consumer
-  # hardware but not every enterprise controller — so tolerate the missing ones
-  # rather than fail module-shrink; the drivers we DO have still get included.
+  # The installer's all-hardware profile references ~88 storage/RAID drivers for
+  # maximum compatibility. We now carry the mainstream ENTERPRISE set ourselves
+  # (see hermes-kernel.config): LSI/Broadcom MegaRAID + Fusion-MPT (mpt3sas,
+  # mpi3mr), Adaptec aacraid, HPE Smart Array (hpsa, smartpqi), 3ware/Areca, the
+  # SAS core (libsas + mvsas/pm8001/isci), QLogic/Emulex Fibre Channel, the extra
+  # SATA controllers, md-raid + dm-multipath, NVMe/TCP+FC, and VMware/Hyper-V
+  # guest storage. allowMissingModules stays on only to tolerate the few drivers
+  # the profile still lists that were removed upstream (e.g. 3w-xxxx) so
+  # module-shrink doesn't fail on them.
   boot.initrd.allowMissingModules = true;
 
   # hermes-kernel.config now ships broad hardware support — NVMe, Wi-Fi,
