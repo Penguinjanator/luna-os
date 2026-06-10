@@ -22,6 +22,11 @@ in
   # Firmware blobs for Wi-Fi / GPUs (iwlwifi, amdgpu, …) that our drivers need.
   hardware.enableRedistributableFirmware = true;
 
+  # ZFS is an out-of-tree module that doesn't support bleeding-edge / -rc
+  # kernels — zfs-kernel refuses to build against 7.1.0-rc7. The installer ISO
+  # pulls ZFS in by default, so disable it for anything on our custom kernel.
+  boot.supportedFilesystems.zfs = lib.mkForce false;
+
   # hermes-kernel.config now ships broad hardware support — NVMe, Wi-Fi,
   # AMD/Nvidia/Intel GPU, common filesystems, the virtio drivers the VM needs,
   # AND every module in NixOS's default initrd set (SATA/USB glue + HID quirk
