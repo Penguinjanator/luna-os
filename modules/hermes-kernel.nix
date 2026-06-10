@@ -19,16 +19,12 @@ in
 {
   boot.kernelPackages = pkgs.linuxPackagesFor hermesKernel;
 
-  # Our kernel builds every VM-critical driver straight in (=y): virtio
-  # (pci/mmio/blk/net/scsi), 9p, virtiofs, ext4, overlay, ahci, sd, tpm, loop…
-  # So the initrd needs NO loadable modules. Rather than chase each module NixOS
-  # lists in availableKernelModules (virtio_rng, hid_apple, tpm-*…) — many of
-  # which our lean kernel doesn't ship — drop the default set and force the
-  # available-modules list empty. The VM boots entirely from built-ins.
-  # NOTE: NixOS-module change, not a kernel .config change — no recompile.
-  boot.initrd.includeDefaultModules = false;
-  boot.initrd.availableKernelModules = lib.mkForce [ ];
-  # qemu-vm also force-loads virtio_gpu / virtio_rng via initrd.kernelModules;
-  # we're headless and don't ship those. Empty this too — built-ins cover boot.
-  boot.initrd.kernelModules = lib.mkForce [ ];
+  # Firmware blobs for Wi-Fi / GPUs (iwlwifi, amdgpu, …) that our drivers need.
+  hardware.enableRedistributableFirmware = true;
+
+  # hermes-kernel.config now ships broad hardware support — NVMe, Wi-Fi,
+  # AMD/Nvidia/Intel GPU, common filesystems, the virtio drivers the VM needs,
+  # AND every module in NixOS's default initrd set (SATA/USB glue + HID quirk
+  # drivers + device-mapper). So NixOS includes its default modules normally —
+  # nothing is forced empty, and keyboards / mice / quirky peripherals all work.
 }
