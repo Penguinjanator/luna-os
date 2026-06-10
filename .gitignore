@@ -1,0 +1,12 @@
+# Nix build outputs
+result
+result-*
+
+# Local VM state & logs
+*.qcow2
+build-vm.log
+
+# Editor / OS cruft
+*.swp
+*~
+.DS_Store
