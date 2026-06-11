@@ -12,6 +12,13 @@
       url = "git+file:///home/potato/work-code/linux-master";
       flake = false;
     };
+
+    # Luna's brain: our fork of Nous Research's Hermes Agent. Pinned as an input
+    # so it stays upstream-updatable (`nix flake update`). Local git+file for now;
+    # swap to git+ssh://git@github.com/Penguinjanator/hermes-but-better later.
+    # NB: intentionally NOT following our nixpkgs — she builds against her own
+    # locked nixpkgs (uv2nix), matching how upstream tests her.
+    hermes.url = "git+file:///home/potato/work-code/hermes-but-better";
   };
 
   # luna-os is built as a MATRIX, not a handful of hand-written systems:
@@ -29,7 +36,7 @@
   # backward compatible: luna-os, luna-os-lab, luna-os-iso, luna-os-lab-iso are
   # the terminal points; desktops add a -gnome / -kde infix.
   outputs =
-    { self, nixpkgs, luna-kernel, ... }:
+    { self, nixpkgs, luna-kernel, hermes, ... }:
     let
       system = "x86_64-linux";
       lib = nixpkgs.lib;
@@ -75,8 +82,9 @@
       mkSystem = { kernel, desktop, target }:
         lib.nixosSystem {
           inherit system;
-          # Only the lab kernel module needs the kernel source as a specialArg.
-          specialArgs = lib.optionalAttrs (kernel == "lab") { inherit luna-kernel; };
+          # Luna's brain (hermes) goes to every variant; the kernel source only
+          # to the lab variants that build our custom kernel.
+          specialArgs = { inherit hermes; } // lib.optionalAttrs (kernel == "lab") { inherit luna-kernel; };
           modules =
             # A "system" is the installable/VM base; an "iso" is the live image.
             (if target == "iso" then [ isoProfile ] else [ ./configuration.nix ])
