@@ -25,5 +25,7 @@
     group = "root"; # default is "hermes"; with createUser=false that group
     createUser = false; # wouldn't exist → systemd EXIT_GROUP (216). root:root.
     stateDir = "/var/lib/hermes"; # HERMES_HOME = /var/lib/hermes/.hermes
+    addToSystemPackages = true; # put the `hermes` CLI on PATH — to talk to her,
+    # and so new users can run `hermes setup` to drop in their own keys/profile.
   };
 }
