@@ -21,11 +21,9 @@
   };
   users.users.root.initialPassword = "root"; # dev convenience only
 
-  environment.systemPackages = with pkgs; [
-    vim
-    git
-    htop
-  ];
+  # The shared base userland (editors, git, net/disk tools, …) lives in
+  # modules/luna.nix so every variant — including the ISOs — gets it. Add only
+  # VM-specific extras here if ever needed.
 
   # QEMU VM resources. These go under `vmVariant` because the qemu-vm options
   # (memorySize/cores/graphics) are only in scope for the VM sub-evaluation

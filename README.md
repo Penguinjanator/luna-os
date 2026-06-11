@@ -1,11 +1,18 @@
 # luna-os
 
 An AI-native operating system built on **NixOS** — the eventual home of the
-**Hermes** agent. It ships in two flavors from one small set of files:
+**Hermes** agent. From one small set of files it builds a whole **matrix** of
+variants along three axes:
 
-- **`luna-os`** — daily-driver track, on the stock NixOS kernel (boots anywhere).
-- **`luna-os-lab`** — research track, on **our own custom Linux 7.1.0-rc7 kernel**,
-  where kernel-level AI work (`/dev/hermes`, eBPF, a security module) will live.
+- **kernel** — `stock` (the NixOS kernel, boots anywhere) or `lab` (**our own
+  custom Linux 7.1.0-rc7 kernel**, where kernel-level AI work — `/dev/hermes`,
+  eBPF, a security module — will live).
+- **desktop** — `gnome`, `kde`, or `terminal`-only. This is the "flavor", done
+  exactly how upstream NixOS ships its installers: one image per desktop.
+- **target** — an installable/VM `system`, or a live `.iso`.
+
+The terminal points keep their original names — **`luna-os`** (stock daily driver)
+and **`luna-os-lab`** (research track) — and desktops add a `-gnome` / `-kde` infix.
 
 ---
 
@@ -46,20 +53,27 @@ luna-os/
 ├── configuration.nix          # The base system: the `luna` user, hostname,
 │                              # installed packages, VM tuning.
 └── modules/
-    ├── luna.nix               # The "luna" identity. Imports the agent module and
-    │                          # drops an /etc/luna-os/release marker. This is where
-    │                          # future pieces (desktop, policy) get wired in.
+    ├── luna.nix               # The "luna" identity. Imports the agent + dev
+    │                          # toolchains, ships the base userland, drops an
+    │                          # /etc/luna-os/release marker. Shared by EVERY variant.
+    ├── dev.nix                # General-purpose dev languages (Rust, Python, C/C++,
+    │                          # Go, Node/TypeScript) baked into every variant.
     ├── hermes-agent.nix       # The Hermes agent daemon as a systemd service.
     │                          # Skeleton for now (disabled); the LLM brain lives
     │                          # in USERSPACE by design, never in the kernel.
     ├── hermes-kernel.nix      # Builds our CUSTOM kernel (the lab track) from our
     │                          # source + config, and makes it the system kernel.
-    └── hermes-kernel.config   # The Linux kernel .config for our custom kernel.
+    ├── hermes-kernel.config   # The Linux kernel .config for our custom kernel.
+    └── desktops/              # The desktop "flavors" — one layer each.
+        ├── gnome.nix          # GNOME (GDM + GNOME).
+        └── kde.nix            # KDE Plasma 6 (SDDM + Plasma).
 ```
 
 A NixOS system is assembled by importing **modules** (the `.nix` files above) into
-a **configuration**. `luna-os` and `luna-os-lab` share the same modules and differ
-by exactly **one import** — the custom kernel. That's the whole trick.
+a **configuration**. Every variant shares `modules/luna.nix`; the flake just layers
+on a kernel module (for `lab`) and a desktop module (for `gnome`/`kde`). The whole
+matrix is generated from a single `mkSystem` function in `flake.nix` — no
+duplication, which is why so few files cover so many variants.
 
 ---
 
@@ -94,6 +108,9 @@ The VM auto-logs in as user `luna`. Confirm which kernel you're on with
 `uname -r` (`6.18.x` = stock, `7.1.0-rc7` = ours). **Quit QEMU** with
 `Ctrl-a` then `x`.
 
+Want a desktop instead of a shell? Swap in a flavor: `nix build .#vm-gnome`
+(or `.#vm-kde`, `.#vm-lab-gnome`, …) opens a graphical QEMU window.
+
 > No KVM (e.g. inside WSL2)? It falls back to slower software emulation
 > automatically — it still works, just give it a minute to boot.
 
@@ -103,7 +120,7 @@ The VM auto-logs in as user `luna`. Confirm which kernel you're on with
 
 ```sh
 # Stock-kernel ISO — boots and installs on real hardware:
-nix build .#iso
+nix build .#iso          # or .#iso-gnome / .#iso-kde for a live desktop
 ls result/iso/*.iso
 ```
 
@@ -120,21 +137,29 @@ NixOS produces a **hybrid ISO** (boots both UEFI and legacy BIOS) containing the
 kernel, an initrd, a squashfs of the whole system, a bootloader, and a live
 installer — all generated from this repo. No manual bootloader/initramfs wrangling.
 
-> **Note:** `.#iso-lab` (the ISO on our custom kernel) currently boots **only in a
-> VM**. Our kernel is tuned lean for QEMU and doesn't yet carry real-hardware
-> drivers (NVMe, Wi-Fi, AMD/Nvidia GPUs, …). Making it boot real machines is an
-> in-progress goal — see the roadmap. Use `.#iso` for real hardware today.
+> **Note:** the `.#iso-lab*` images (on our custom kernel) boot to a working login
+> in a **VM** today. Broad real-hardware coverage (enterprise RAID/HBA controllers,
+> some Wi-Fi/GPU firmware paths) is still being filled in — see the roadmap. Use the
+> stock `.#iso*` images for real hardware today.
 
 ---
 
 ## Build targets at a glance
 
-| Command | What you get |
-|---|---|
-| `nix build .#vm` | QEMU VM, stock kernel |
-| `nix build .#vm-lab` | QEMU VM, our custom 7.1.0-rc7 kernel |
-| `nix build .#iso` | Installable live ISO, stock kernel (real hardware) |
-| `nix build .#iso-lab` | Installable live ISO, custom kernel (VM-only for now) |
+The grid is **kernel × desktop**, with a `vm-` and an `iso-` build for each cell:
+
+| Desktop | Stock kernel — VM / ISO | Lab kernel (7.1.0-rc7) — VM / ISO |
+|---|---|---|
+| terminal | `.#vm` / `.#iso` | `.#vm-lab` / `.#iso-lab` |
+| GNOME | `.#vm-gnome` / `.#iso-gnome` | `.#vm-lab-gnome` / `.#iso-lab-gnome` |
+| KDE Plasma 6 | `.#vm-kde` / `.#iso-kde` | `.#vm-lab-kde` / `.#iso-lab-kde` |
+
+- **`vm-*`** builds a `run-*-vm` script — terminal VMs are headless/serial; desktop
+  VMs open a graphical QEMU window.
+- **`iso-*`** builds a hybrid live ISO at `result/iso/*.iso` — boot the desktop ones
+  and you land straight in a live GNOME/KDE session.
+- Every variant ships the shared base userland **and** the dev languages
+  (Rust, Python, C/C++, Go, Node/TypeScript).
 
 ---
 
