@@ -11,14 +11,11 @@
     "console=tty1"
   ];
 
-  # Dev login: autologin on the console so we land straight in a shell.
+  # Dev login: autologin on the console so we land straight in a shell. The
+  # `luna` user itself is defined in modules/luna.nix (shared by every variant,
+  # including the live ISOs), so it isn't redefined here.
   services.getty.autologinUser = "luna";
 
-  users.users.luna = {
-    isNormalUser = true;
-    initialPassword = "luna"; # dev only — replace before anything real
-    extraGroups = [ "wheel" ];
-  };
   users.users.root.initialPassword = "root"; # dev convenience only
 
   # The shared base userland (editors, git, net/disk tools, …) lives in

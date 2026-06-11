@@ -21,9 +21,14 @@
 
   services.hermes-agent = {
     enable = true;
-    user = "root";
-    group = "root"; # default is "hermes"; with createUser=false that group
-    createUser = false; # wouldn't exist → systemd EXIT_GROUP (216). root:root.
+    # Run as the `luna` user (defined in luna.nix: wheel + passwordless sudo).
+    # The module makes ${stateDir}/.hermes owned luna:users mode 2770, and the
+    # desktop GUI also runs as luna — so the GUI shares this writable HERMES_HOME
+    # instead of hitting EACCES against a root-owned dir. Full root reach comes
+    # from luna's passwordless sudo, not from running the daemon as uid 0.
+    user = "luna";
+    group = "users"; # luna's primary group; must exist or systemd EXIT_GROUP (216)
+    createUser = false; # luna is defined in luna.nix, not by the module
     stateDir = "/var/lib/hermes"; # HERMES_HOME = /var/lib/hermes/.hermes
     addToSystemPackages = true; # put the `hermes` CLI on PATH — to talk to her,
     # and so new users can run `hermes setup` to drop in their own keys/profile.

@@ -15,6 +15,20 @@
     ./dev.nix
   ];
 
+  # Luna is ONE root-capable user across every variant — the console, the desktop
+  # session (autologin), and the Hermes agent service all run as `luna`. wheel +
+  # passwordless sudo = effective root without the fragility of a literal-root
+  # graphical session. Because the GUI runs as luna AND the agent runs as luna,
+  # they share one writable HERMES_HOME (the module makes it 2770 luna-owned) —
+  # no permission split, one Luna. Defined here (not configuration.nix) so the
+  # live ISOs get the user too.
+  users.users.luna = {
+    isNormalUser = true;
+    initialPassword = "luna"; # dev only — replace before anything real
+    extraGroups = [ "wheel" ];
+  };
+  security.sudo.wheelNeedsPassword = false; # dangerous-af: frictionless root
+
   environment.etc."luna-os/release".text = "luna-os 0.0.1 (first light)\n";
 
   # LUNA-OS self-update plumbing. The flake fetches its private inputs (kernel +
