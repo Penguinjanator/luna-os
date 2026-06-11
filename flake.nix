@@ -81,7 +81,7 @@
       isoDesktopAutologin = {
         services.displayManager.autoLogin = {
           enable = true;
-          user = "nixos";
+          user = "luna"; # the one root-capable user (defined in modules/luna.nix)
         };
       };
 
@@ -99,6 +99,9 @@
             ++ kernelLayer.${kernel}
             ++ desktopLayer.${desktop}
             ++ lib.optional (target == "iso" && desktop != "terminal") isoDesktopAutologin
+            # Headless variants re-close the user-namespace surface; desktop
+            # variants keep it (Chromium's sandbox needs unprivileged userns).
+            ++ lib.optional (desktop == "terminal") ./modules/harden-userns.nix
             # A headless VM of a desktop is pointless — give desktop VM variants a
             # real graphical window (no effect on the ISO or installed system).
             ++ lib.optional (target == "system" && desktop != "terminal") {

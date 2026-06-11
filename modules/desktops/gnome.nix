@@ -12,4 +12,9 @@
   # GDM greeter + the GNOME desktop itself.
   services.displayManager.gdm.enable = true;
   services.desktopManager.gnome.enable = true;
+
+  # The minimal-ISO base installs no fonts, so fontconfig has nothing to hand
+  # Chromium/Electron — text renders as blank glyphs (you see buttons + inputs
+  # but no words). Pull in the default font set (this also wires up fontconfig).
+  fonts.enableDefaultPackages = true;
 }
