@@ -17,6 +17,20 @@
 
   environment.etc."luna-os/release".text = "luna-os 0.0.1 (first light)\n";
 
+  # LUNA-OS self-update plumbing. The flake fetches its private inputs (kernel +
+  # hermes) over git+ssh through the `github-penguin` host alias. Baking the
+  # alias into the OS means a deployed box self-updates with zero config: drop
+  # the read-only key at /root/.ssh/luna-os_ed25519 and `nix flake update` /
+  # `nixos-rebuild --flake` just work. The KEY is never baked in (it's a secret,
+  # dropped per-machine like ~/.hermes); only this non-secret alias is.
+  programs.ssh.extraConfig = ''
+    Host github-penguin
+        HostName github.com
+        User git
+        IdentityFile /root/.ssh/luna-os_ed25519
+        IdentitiesOnly yes
+  '';
+
   # A genuinely useful base userland so luna-os — and crucially both live ISOs —
   # isn't a bare minimal build. Every variant (daily, lab, and the two ISOs)
   # imports this module, so this is the one place to define the shared toolset.

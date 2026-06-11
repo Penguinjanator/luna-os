@@ -31,33 +31,35 @@
         "uv2nix": "uv2nix_2"
       },
       "locked": {
-        "lastModified": 1781172270,
-        "narHash": "sha256-17yz8an/YmOg3zROyggLAYvSlXIHCBtLvnWR7AQ1vq4=",
-        "ref": "refs/heads/main",
-        "rev": "85503dcecac8f56ec06cd8cf7e45ac8af8234ac1",
-        "revCount": 11339,
+        "lastModified": 1781182835,
+        "narHash": "sha256-6Dg2Ch20q168WViH160CxMw0l2F9YYTWQ9RQhE72b5Y=",
+        "ref": "main",
+        "rev": "dbe55450503d3cd4a94a5167de991f93bcd422fb",
+        "revCount": 11341,
         "type": "git",
-        "url": "file:///home/potato/work-code/hermes-but-better"
+        "url": "ssh://git@github-penguin/Penguinjanator/hermes-but-better"
       },
       "original": {
+        "ref": "main",
         "type": "git",
-        "url": "file:///home/potato/work-code/hermes-but-better"
+        "url": "ssh://git@github-penguin/Penguinjanator/hermes-but-better"
       }
     },
     "luna-kernel": {
       "flake": false,
       "locked": {
-        "lastModified": 1781075944,
-        "narHash": "sha256-4CJNhV5IoXya0iEVtK24Nm1kZaocqPRsbLp9O311OpA=",
-        "ref": "refs/heads/main",
-        "rev": "bec8a89462348a03bb478bd197684e03b974c883",
-        "revCount": 1,
+        "lastModified": 1781077338,
+        "narHash": "sha256-iJfYuugTJ2GV7Ng/2T2t3xI350ig60WqCof0Ze+G90A=",
+        "ref": "main",
+        "rev": "86deeaf3a485696dc72738908f4fe9e81f86338b",
+        "revCount": 5,
         "type": "git",
-        "url": "file:///home/potato/work-code/linux-master"
+        "url": "ssh://git@github-penguin/Penguinjanator/luna-os-kernel"
       },
       "original": {
+        "ref": "main",
         "type": "git",
-        "url": "file:///home/potato/work-code/linux-master"
+        "url": "ssh://git@github-penguin/Penguinjanator/luna-os-kernel"
       }
     },
     "nixpkgs": {

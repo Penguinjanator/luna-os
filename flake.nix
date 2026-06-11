@@ -4,21 +4,27 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-    # Our kernel source = Penguinjanator/luna-os-kernel (private).
-    # For local dev we pin the working copy via git+file (fast, no fetch).
-    # Switch to git+ssh://git@github.com/Penguinjanator/luna-os-kernel for
-    # off-machine / CI builds (uses the luna-os key, works with private repos).
+    # Our kernel source = Penguinjanator/luna-os-kernel (private). Fetched over
+    # git+ssh through the `github-penguin` host alias (~/.ssh/config -> the
+    # luna-os_ed25519 key). This URL is baked into the OS, so a deployed machine
+    # self-updates the same way: drop the key in, `nix flake update`. No access
+    # token anywhere. ?ref=main tracks the stable branch.
     luna-kernel = {
-      url = "git+file:///home/potato/work-code/linux-master";
+      url = "git+ssh://git@github-penguin/Penguinjanator/luna-os-kernel?ref=main";
       flake = false;
     };
 
-    # Luna's brain: our fork of Nous Research's Hermes Agent. Pinned as an input
-    # so it stays upstream-updatable (`nix flake update`). Local git+file for now;
-    # swap to git+ssh://git@github.com/Penguinjanator/hermes-but-better later.
+    # Luna's brain: our fork of Nous Research's Hermes Agent. Same git+ssh path
+    # so the OS can pull upstream merges itself (`nix flake update hermes`).
     # NB: intentionally NOT following our nixpkgs — she builds against her own
     # locked nixpkgs (uv2nix), matching how upstream tests her.
-    hermes.url = "git+file:///home/potato/work-code/hermes-but-better";
+    #
+    # Iterating on UNCOMMITTED local changes? git+ssh fetches the pushed commit,
+    # so override per-build instead of editing this file:
+    #   nix build .#iso-lab \
+    #     --override-input hermes      git+file:///home/potato/work-code/hermes-but-better \
+    #     --override-input luna-kernel git+file:///home/potato/work-code/linux-master
+    hermes.url = "git+ssh://git@github-penguin/Penguinjanator/hermes-but-better?ref=main";
   };
 
   # luna-os is built as a MATRIX, not a handful of hand-written systems:
