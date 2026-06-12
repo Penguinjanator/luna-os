@@ -97,7 +97,9 @@
           specialArgs = { inherit hermes; } // lib.optionalAttrs (kernel == "lab") { inherit luna-kernel; };
           modules =
             # A "system" is the installable/VM base; an "iso" is the live image.
-            (if target == "iso" then [ isoProfile ] else [ ./configuration.nix ])
+            # System targets also layer in the disk + bootloader (modules/disk.nix)
+            # so they install to a real disk: `nixos-install --flake .#luna-os-kde`.
+            (if target == "iso" then [ isoProfile ] else [ ./configuration.nix ./modules/disk.nix ])
             ++ [ ./modules/luna.nix ]
             ++ kernelLayer.${kernel}
             ++ desktopLayer.${desktop}

@@ -178,9 +178,51 @@ Both **skip `nixos-generate-config`** — they differ only in *who* prepares the
 
 **Route A — manual** (mirrors the official NixOS guide, with our flake at the end):
 
-1. Boot the ISO; get online (`nmtui` for Wi-Fi).
-2. Partition (UEFI/GPT, e.g. `fdisk /dev/sda`): a ~512 MB EFI System partition +
-   a root partition filling the rest.
+1) Boot the ISO and get it online.
+
+2) Partitioning
+
+To partition the persistent storage run `sudo fdisk /dev/diskX`, where \`diskX\` is the disk you want to partition. Typically, this might be something like `/dev/sda`.
+
+Depending on your hardware, you should follow either the DOS or (U)EFI partitioning instructions.
+
+A very simple example setup is given here.
+
+**DOS Instructions**
+
+In the DOS interactive prompt, enter the following commands:
+
+- `o` (dos disk label)
+- `n` new
+- `p` primary (4 primary in total)
+- `1` (partition number \[1/4\])
+- `2048` first sector (alignment for performance)
+- `+500M` last sector (boot sector size)
+- rm signature (`Y`), if ex. => warning of overwriting existing system, could use wipefs
+- `n`
+- `p`
+- `2`
+- default (fill up partition)
+- default (fill up partition)
+- `w` (write)
+
+**UEFI Instructions**
+
+In the UEFI interactive prompt, enter the following commands:
+
+- `g` (gpt disk label)
+- `n`
+- `1` (partition number \[1/128\])
+- `2048` first sector
+- `+500M` last sector (boot sector size)
+- `t`
+- `1` (EFI System)
+- `n`
+- `2`
+- default (fill up partition)
+- default (fill up partition)
+- `w` (write)
+
 3. Format **with the labels the flake expects**, so no hardware file is needed:
    ```sh
    mkfs.fat -F 32 /dev/sda1 && fatlabel /dev/sda1 NIXBOOT
@@ -198,22 +240,32 @@ Both **skip `nixos-generate-config`** — they differ only in *who* prepares the
    ```
 6. Reboot, `passwd` your user, drop in Luna's `.hermes`.
 
-**Route B — disko** (semi-automated): the flake declares the whole disk layout and
-`disko` partitions + formats + mounts it for you — no hand-partitioning at all:
+**Route B — disko** (semi-automated): `disko` reads the layout in `./disko.nix`
+and partitions + formats + mounts the disk for you — no hand-partitioning:
 
-1. Boot the ISO; get online.
-2. `disko --mode disko` against the flake's disk config (wipes + formats the target).
-3. `nixos-install --flake github:Penguinjanator/luna-os#luna-os-kde`
+1. Boot the ISO; get online, then grab the repo (for `disko.nix`):
+   `git clone https://github.com/Penguinjanator/luna-os && cd luna-os`
+2. Format the disk from the layout — **this wipes the target disk**:
+   ```sh
+   sudo nix --experimental-features 'nix-command flakes' \
+     run github:nix-community/disko/latest -- --mode disko ./disko.nix
+   ```
+3. `sudo nixos-install --flake .#luna-os-kde`
 4. Reboot, `passwd`, drop in `.hermes`.
 
 Either way, from then on you change the system the usual NixOS way — edit the flake,
 then `nixos-rebuild switch --flake …#luna-os-kde`. Every rebuild is a new generation
 you can roll back to; nothing is ever destructively overwritten.
 
-> **Status:** today's `luna-os-*` configs are live-image / VM shaped — they don't
-> declare a disk or bootloader yet, so *neither* route is wired up. The remaining
-> piece is one installable variant adding `systemd-boot` plus either the by-label
-> `fileSystems` (Route A) or a `disko` block (Route B). Purely additive, on the roadmap.
+> **EFI required:** boot is `systemd-boot`, so the machine must be in **EFI mode**.
+> In VirtualBox, tick **Settings → System → Motherboard → Enable EFI** before you
+> install.
+>
+> **Status — done:** the `system`-target configs (`luna-os`, `luna-os-kde`, …) now
+> declare the disk by label (`modules/disk.nix`) + `systemd-boot`, and `./disko.nix`
+> holds the disko layout, so both routes work today. The target disk is `/dev/sda`
+> (VirtualBox's SATA default) — change it in `disko.nix` for NVMe (`/dev/nvme0n1`)
+> or virtio (`/dev/vda`).
 
 ---
 
