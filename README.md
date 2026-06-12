@@ -144,6 +144,54 @@ installer — all generated from this repo. No manual bootloader/initramfs wrang
 
 ---
 
+## Installing to disk (and why it won't clobber your config)
+
+Booting the ISO is great for a look, but it's a **live image** — its writable
+layer is RAM-backed, so it forgets everything (logins, Luna's memory, anything
+you change) on reboot. For real use you **install** luna-os onto a disk. The
+question everyone asks first:
+
+> **Won't installing overwrite all our config?** No — and the recipe metaphor is
+> exactly why. This repo is the **recipe**; installing just **cooks it onto a
+> disk**. The flake stays the one source of truth, so you can't overwrite it by
+> building from it. The installed system *is* luna-os — provided you install
+> **from this flake**, not the stock NixOS installer.
+
+### You don't run `nixos-generate-config`
+
+A normal NixOS install begins with `nixos-generate-config`, which writes two
+files. Here they have different fates:
+
+- **`configuration.nix`** (the starter template) — **skip it, always.** It's for
+  people who don't already have a config. The flake replaces it outright.
+- **`hardware-configuration.nix`** (auto-detected disk + initrd modules) — this
+  holds the one genuinely machine-specific thing: *which partition is `/`* and
+  *what's needed to mount it*. We declare that in the flake with
+  [`disko`](https://github.com/nix-community/disko) instead of generating it — so
+  the disk layout is reproducible and there is **no hand-edited hardware file and
+  no `nixos-generate-config` step at all.**
+
+### The flow
+
+1. Boot the live ISO (`.#iso-kde`, …).
+2. `disko` partitions + formats the target disk straight from the flake.
+3. `nixos-install --flake <luna-os>#luna-os-kde` builds the system from this repo
+   and writes it onto the disk.
+4. Reboot into a **persistent** luna-os.
+5. Drop in Luna's `.hermes` bundle (her keys + memory — the per-machine secret
+   that deliberately lives *outside* the flake).
+
+From then on you change the system the usual way — edit the flake, then
+`nixos-rebuild switch --flake <luna-os>#luna-os-kde`. Every rebuild is a new
+generation you can roll back to; nothing is ever destructively overwritten.
+
+> **Status:** today's `luna-os-*` configs are live-image / VM shaped and don't
+> yet declare a disk. Adding the `disko` layout + a bootloader (`systemd-boot`)
+> as an installable variant is the one remaining piece — purely additive, and on
+> the roadmap.
+
+---
+
 ## Build targets at a glance
 
 The grid is **kernel × desktop**, with a `vm-` and an `iso-` build for each cell:
