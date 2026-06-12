@@ -55,7 +55,7 @@ luna-os/
 └── modules/
     ├── luna.nix               # The "luna" identity. Imports the agent + dev
     │                          # toolchains, ships the base userland, drops an
-    │                          # /etc/luna-os/release marker. Shared by EVERY variant.
+    │                          # /etc/luna-os-release marker. Shared by EVERY variant.
     ├── dev.nix                # General-purpose dev languages (Rust, Python, C/C++,
     │                          # Go, Node/TypeScript) baked into every variant.
     ├── hermes-agent.nix       # The Hermes agent daemon as a systemd service.

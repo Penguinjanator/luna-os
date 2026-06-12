@@ -29,7 +29,7 @@
   };
   security.sudo.wheelNeedsPassword = false; # dangerous-af: frictionless root
 
-  environment.etc."luna-os/release".text = "luna-os 0.0.1 (first light)\n";
+  environment.etc."luna-os-release".text = "luna-os 0.0.1 (first light)\n";
 
   # LUNA-OS self-update plumbing. The flake fetches its private inputs (kernel +
   # hermes) over git+ssh through the `github-penguin` host alias. Baking the
