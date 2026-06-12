@@ -25,6 +25,13 @@
     #     --override-input hermes      git+file:///home/potato/work-code/hermes-but-better \
     #     --override-input luna-kernel git+file:///home/potato/work-code/linux-master
     hermes.url = "git+ssh://git@github-penguin/Penguinjanator/hermes-but-better?ref=main";
+
+    # disko: declarative disk partitioning. Drives the baked-in `luna-install`
+    # one-shot installer (disko.nix + modules/disk.nix). Follows our nixpkgs.
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   # luna-os is built as a MATRIX, not a handful of hand-written systems:
@@ -42,7 +49,7 @@
   # backward compatible: luna-os, luna-os-lab, luna-os-iso, luna-os-lab-iso are
   # the terminal points; desktops add a -gnome / -kde infix.
   outputs =
-    { self, nixpkgs, luna-kernel, hermes, ... }:
+    { self, nixpkgs, luna-kernel, hermes, disko, ... }:
     let
       system = "x86_64-linux";
       lib = nixpkgs.lib;
@@ -94,7 +101,14 @@
           inherit system;
           # Luna's brain (hermes) goes to every variant; the kernel source only
           # to the lab variants that build our custom kernel.
-          specialArgs = { inherit hermes; } // lib.optionalAttrs (kernel == "lab") { inherit luna-kernel; };
+          specialArgs = { inherit hermes self; }
+            // lib.optionalAttrs (kernel == "lab") { inherit luna-kernel; }
+            # ISOs are self-contained installers: hand them disko + the name of
+            # the system target to install (luna-os-kde-iso installs luna-os-kde).
+            // lib.optionalAttrs (target == "iso") {
+                 inherit disko;
+                 installTarget = sysName { inherit kernel desktop; target = "system"; };
+               };
           modules =
             # A "system" is the installable/VM base; an "iso" is the live image.
             # System targets also layer in the disk + bootloader (modules/disk.nix)
@@ -107,6 +121,9 @@
             # Headless variants re-close the user-namespace surface; desktop
             # variants keep it (Chromium's sandbox needs unprivileged userns).
             ++ lib.optional (desktop == "terminal") ./modules/harden-userns.nix
+            # Live ISOs are self-contained installers: bake the flake to
+            # /etc/luna-os + ship `disko` and a `luna-install` one-shot.
+            ++ lib.optional (target == "iso") ./modules/installer.nix
             # A headless VM of a desktop is pointless — give desktop VM variants a
             # real graphical window (no effect on the ISO or installed system).
             ++ lib.optional (target == "system" && desktop != "terminal") {

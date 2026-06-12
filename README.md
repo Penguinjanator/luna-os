@@ -172,6 +172,26 @@ files. Here they have different fates:
   **either way there's no hand-edited hardware file and no `nixos-generate-config`
   step at all.**
 
+### The easy way — `luna-install`
+
+The live ISO is a **self-contained installer**: the flake is baked in at
+`/etc/luna-os`, `disko` is on `PATH`, and a one-shot `luna-install` does the lot.
+The whole install:
+
+1. In VirtualBox: **Settings → System → Motherboard → ✅ Enable EFI**.
+2. Boot the `kde` ISO (it autologins as `luna`); get online.
+3. Run it:
+   ```sh
+   sudo luna-install
+   ```
+   It shows the target disk, waits for you to type `YES`, then formats with
+   `disko` and installs the system that **matches the ISO you booted** (`kde` →
+   `luna-os-kde`, `kde-lab` → `luna-os-lab-kde`, …).
+4. Power off, remove the ISO, boot from the disk, drop in `.hermes`.
+
+No `git clone`, no flake URLs to remember. The two manual routes below are exactly
+what `luna-install` automates — reach for them only if you want to drive it by hand.
+
 ### Two routes to lay it down
 
 Both **skip `nixos-generate-config`** — they differ only in *who* prepares the disk.
