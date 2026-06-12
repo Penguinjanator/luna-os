@@ -2,6 +2,9 @@
 result
 result-*
 
+# Built ISO images (multi-GB — keep out of git)
+luna-os-isos/
+
 # Local VM state & logs
 *.qcow2
 build-vm.log

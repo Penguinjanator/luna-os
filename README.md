@@ -179,7 +179,8 @@ The live ISO is a **self-contained installer**: the flake is baked in at
 The whole install:
 
 1. In VirtualBox: **Settings → System → Motherboard → ✅ Enable EFI**.
-2. Boot the `kde` ISO (it autologins as `luna`); get online.
+2. Boot the `kde` ISO (it autologins as `luna`); get online, and make sure Luna's
+   **deploy key** is in place — see *The deploy key* below (or bake it into the ISO).
 3. Run it:
    ```sh
    sudo luna-install
@@ -286,6 +287,52 @@ you can roll back to; nothing is ever destructively overwritten.
 > holds the disko layout, so both routes work today. The target disk is `/dev/sda`
 > (VirtualBox's SATA default) — change it in `disko.nix` for NVMe (`/dev/nvme0n1`)
 > or virtio (`/dev/vda`).
+
+### The deploy key — letting the installer fetch Luna's private inputs
+
+Every install route ends in `nixos-install --flake …`, which **re-evaluates the
+flake on the live machine** and fetches luna-os's private inputs — `hermes` (needed
+by *every* variant) and, on the `lab` images, the custom kernel — over `git+ssh`.
+The ISO bakes in the `github-penguin` SSH **alias** (`modules/luna.nix`) but **not
+the key**: a private key is a secret, dropped per-machine, never committed or
+shipped. Without it the install dies the moment it reaches `hermes`, with
+`Permission denied (publickey)`.
+
+Two ways to get the key onto the live system:
+
+**Manual (per boot)** — in the live session, *before* `sudo luna-install`:
+
+```sh
+sudo install -d -m700 /root/.ssh
+sudo tee /root/.ssh/luna-os_ed25519 >/dev/null <<'EOF'
+<paste the full contents of your luna-os_ed25519 private key>
+EOF
+sudo chmod 600 /root/.ssh/luna-os_ed25519
+sudo ssh-keyscan github.com 2>/dev/null | sudo tee /root/.ssh/known_hosts >/dev/null
+sudo ssh -T git@github-penguin   # expect "Hi Penguinjanator! …" — it exits 1, that's normal
+```
+
+It goes in **root's** `.ssh` because `luna-install` runs as root — so test it with
+`sudo ssh -T`, not a bare `ssh` (a normal user can't read a root-owned `600` key,
+which looks exactly like "the key's right there but it won't authenticate").
+
+**Baked in (`LUNA_BAKE_KEY`)** — for repeat testing, bake the key into the image at
+*build* time so a freshly-booted ISO runs `luna-install` with zero setup. It's
+**opt-in**: the key is only included when you set the env var **and** build
+`--impure`, so a normal `nix build .#iso-kde` stays pure and keyless.
+
+```sh
+LUNA_BAKE_KEY=$HOME/.ssh/luna-os_ed25519 nix build --impure .#iso-kde
+```
+
+An activation script (`modules/dev-ssh-key.nix`, gated in `flake.nix`) then installs
+the key to `/root/.ssh/luna-os_ed25519` (mode `600`) on first boot.
+
+> **Security — local testing only.** A baked key lands in the image's
+> **world-readable** nix store; the `600` on `/root/.ssh` is cosmetic, since anyone
+> who can read the ISO can `cat` the key straight out of `/nix/store`. Never
+> distribute or back up a keyed ISO, and rotate the key if one ever leaks. Build
+> real images **without** the env var (keyless), and hand the key over per-machine.
 
 ---
 

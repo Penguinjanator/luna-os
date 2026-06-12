@@ -124,6 +124,14 @@
             # Live ISOs are self-contained installers: bake the flake to
             # /etc/luna-os + ship `disko` and a `luna-install` one-shot.
             ++ lib.optional (target == "iso") ./modules/installer.nix
+            # DEV-ONLY (opt-in): bake the git+ssh deploy key into the live image so
+            # a booted ISO runs `luna-install` without pasting the key. Imported
+            # ONLY when built as `LUNA_BAKE_KEY=/path/to/key nix build --impure ...`;
+            # otherwise getEnv -> "" and normal builds stay pure + keyless. The key
+            # lands in the (world-readable) store, so keyed ISOs are local-test only.
+            ++ lib.optional
+                 (target == "iso" && builtins.getEnv "LUNA_BAKE_KEY" != "")
+                 ./modules/dev-ssh-key.nix
             # A headless VM of a desktop is pointless — give desktop VM variants a
             # real graphical window (no effect on the ISO or installed system).
             ++ lib.optional (target == "system" && desktop != "terminal") {
