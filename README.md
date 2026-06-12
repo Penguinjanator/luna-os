@@ -192,7 +192,7 @@ The whole install:
 No `git clone`, no flake URLs to remember. The two manual routes below are exactly
 what `luna-install` automates — reach for them only if you want to drive it by hand.
 
-### Two more manual routes
+### The two other ways
 
 Both **skip `nixos-generate-config`** — they differ only in *who* prepares the disk.
 
