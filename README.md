@@ -166,29 +166,54 @@ files. Here they have different fates:
   people who don't already have a config. The flake replaces it outright.
 - **`hardware-configuration.nix`** (auto-detected disk + initrd modules) — this
   holds the one genuinely machine-specific thing: *which partition is `/`* and
-  *what's needed to mount it*. We declare that in the flake with
-  [`disko`](https://github.com/nix-community/disko) instead of generating it — so
-  the disk layout is reproducible and there is **no hand-edited hardware file and
-  no `nixos-generate-config` step at all.**
+  *what's needed to mount it*. You give the flake that information **either** by
+  formatting with the labels it expects (manual) **or** by declaring the whole
+  layout with [`disko`](https://github.com/nix-community/disko) (automated) —
+  **either way there's no hand-edited hardware file and no `nixos-generate-config`
+  step at all.**
 
-### The flow
+### Two routes to lay it down
 
-1. Boot the live ISO (`.#iso-kde`, …).
-2. `disko` partitions + formats the target disk straight from the flake.
-3. `nixos-install --flake <luna-os>#luna-os-kde` builds the system from this repo
-   and writes it onto the disk.
-4. Reboot into a **persistent** luna-os.
-5. Drop in Luna's `.hermes` bundle (her keys + memory — the per-machine secret
-   that deliberately lives *outside* the flake).
+Both **skip `nixos-generate-config`** — they differ only in *who* prepares the disk.
 
-From then on you change the system the usual way — edit the flake, then
-`nixos-rebuild switch --flake <luna-os>#luna-os-kde`. Every rebuild is a new
-generation you can roll back to; nothing is ever destructively overwritten.
+**Route A — manual** (mirrors the official NixOS guide, with our flake at the end):
 
-> **Status:** today's `luna-os-*` configs are live-image / VM shaped and don't
-> yet declare a disk. Adding the `disko` layout + a bootloader (`systemd-boot`)
-> as an installable variant is the one remaining piece — purely additive, and on
-> the roadmap.
+1. Boot the ISO; get online (`nmtui` for Wi-Fi).
+2. Partition (UEFI/GPT, e.g. `fdisk /dev/sda`): a ~512 MB EFI System partition +
+   a root partition filling the rest.
+3. Format **with the labels the flake expects**, so no hardware file is needed:
+   ```sh
+   mkfs.fat -F 32 /dev/sda1 && fatlabel /dev/sda1 NIXBOOT
+   mkfs.ext4 -L NIXROOT /dev/sda2
+   ```
+4. Mount:
+   ```sh
+   mount /dev/disk/by-label/NIXROOT /mnt
+   mkdir -p /mnt/boot && mount /dev/disk/by-label/NIXBOOT /mnt/boot
+   ```
+5. Install **from the flake** — this one step replaces both `nixos-generate-config`
+   and the hand-edited config:
+   ```sh
+   nixos-install --flake github:Penguinjanator/luna-os#luna-os-kde
+   ```
+6. Reboot, `passwd` your user, drop in Luna's `.hermes`.
+
+**Route B — disko** (semi-automated): the flake declares the whole disk layout and
+`disko` partitions + formats + mounts it for you — no hand-partitioning at all:
+
+1. Boot the ISO; get online.
+2. `disko --mode disko` against the flake's disk config (wipes + formats the target).
+3. `nixos-install --flake github:Penguinjanator/luna-os#luna-os-kde`
+4. Reboot, `passwd`, drop in `.hermes`.
+
+Either way, from then on you change the system the usual NixOS way — edit the flake,
+then `nixos-rebuild switch --flake …#luna-os-kde`. Every rebuild is a new generation
+you can roll back to; nothing is ever destructively overwritten.
+
+> **Status:** today's `luna-os-*` configs are live-image / VM shaped — they don't
+> declare a disk or bootloader yet, so *neither* route is wired up. The remaining
+> piece is one installable variant adding `systemd-boot` plus either the by-label
+> `fileSystems` (Route A) or a `disko` block (Route B). Purely additive, on the roadmap.
 
 ---
 

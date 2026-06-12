@@ -54,12 +54,15 @@
       desktops = [ "terminal" "gnome" "kde" ];
       targets = [ "system" "iso" ];
 
-      # Desktop layers; "terminal" adds nothing. Desktop flavors also get Luna's
-      # Electron app (modules/hermes/desktop.nix) in their app menu.
+      # Desktop layers; "terminal" adds nothing. (The Nous Electron desktop app
+      # was removed: it bootstraps and OWNS its own backend, which fights luna-os's
+      # always-on gateway. Luna's interface will be NATIVE KDE/GNOME integration —
+      # a Plasma plasmoid/KRunner plugin, a GNOME Shell extension — talking to the
+      # gateway, not a wrapped webapp.)
       desktopLayer = {
         terminal = [ ];
-        gnome = [ ./modules/desktops/gnome.nix ./modules/hermes/desktop.nix ];
-        kde = [ ./modules/desktops/kde.nix ./modules/hermes/desktop.nix ];
+        gnome = [ ./modules/desktops/gnome.nix ];
+        kde = [ ./modules/desktops/kde.nix ];
       };
 
       # Kernel layers; "stock" = nixpkgs kernel, "lab" = our 7.1.0-rc7.
