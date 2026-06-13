@@ -382,3 +382,29 @@ luna-os exists to weave an LLM agent (**Hermes**) into the OS itself. The OS is 
 
 The guiding principle: the probabilistic LLM stays in **userspace**, outside the
 kernel's trust boundary, and acts only through mediated, sandboxed interfaces.
+
+---
+
+## Seeding Luna — her `.hermes` bundle
+
+luna-os builds Luna's *brain* (the Hermes agent) into the OS, but her **identity
+and secrets** — profile, memory, API keys, channel logins — live in a `.hermes`
+bundle you drop in **per machine**. It's a secret, so it's never baked into the
+image or the store; until it's in place she has no API key and can't think. This
+is the `drop in .hermes` step the install routes above refer to.
+
+It goes in **`/var/lib/hermes/.hermes`**. The agent service provisions that
+directory as `luna:users`, mode `2770`, and both the agent and the desktop run as
+`luna` — so as the logged-in `luna` user you drop it straight in:
+
+```sh
+# copy your bundle's CONTENTS into the provisioned dir (as luna, not root):
+cp -a /path/to/your/.hermes/. /var/lib/hermes/.hermes/
+ls -la /var/lib/hermes/.hermes               # should read luna:users
+sudo systemctl restart hermes-agent          # reload her profile
+# (find the unit name if unsure: systemctl --type=service | grep hermes)
+```
+
+If anything lands root-owned, `sudo chown -R luna:users /var/lib/hermes/.hermes`
+fixes it. Then `hermes -z "hola"` should get a real answer — that's how you know
+she's awake.
