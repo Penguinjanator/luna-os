@@ -45,6 +45,17 @@ let
     echo ">>> Installing luna-os ($target) — this builds/fetches the system ..."
     nixos-install --flake "$flake#$target" --no-root-passwd
 
+    # If this ISO carries the git+ssh deploy key (a keyed build), copy it into
+    # the installed system so it can self-update (nixos-rebuild over git+ssh)
+    # without a manual key drop. Lands as a plain 0600 root file on the new disk
+    # — NOT in the world-readable nix store.
+    key=/root/.ssh/luna-os_ed25519
+    if [ -f "$key" ]; then
+      install -d -m 700 /mnt/root/.ssh
+      install -m 600 "$key" /mnt/root/.ssh/luna-os_ed25519
+      echo ">>> deploy key copied into the installed system (/root/.ssh)"
+    fi
+
     echo
     echo "  Done. Next:"
     echo "    1. Power off and remove the ISO from the VM."
