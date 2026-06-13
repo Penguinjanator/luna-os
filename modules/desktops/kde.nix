@@ -26,5 +26,6 @@
   environment.systemPackages = with pkgs; [
     telegram-desktop
     fontconfig
+    fsearch # fast GUI file search
   ];
 }

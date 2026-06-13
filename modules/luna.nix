@@ -45,6 +45,18 @@
         IdentitiesOnly yes
   '';
 
+  # nh (nix-helper): friendlier `nh os switch` + automatic generation cleanup.
+  # clean.* runs a GC on a timer keeping recent generations — disk hygiene that
+  # keeps the store (and, in WSL, the ext4.vhdx) from bloating over time.
+  programs.nh = {
+    enable = true;
+    clean.enable = true;
+    clean.extraArgs = "--keep-since 4d --keep 3";
+    # NH_OS_FLAKE intentionally unset: no universal luna-os flake path
+    # (/etc/luna-os exists only on the live ISOs, not installed systems). Point
+    # it at your checkout for a default: programs.nh.flake = "/home/luna/luna-os";
+  };
+
   # A genuinely useful base userland so luna-os — and crucially both live ISOs —
   # isn't a bare minimal build. Every variant (daily, lab, and the two ISOs)
   # imports this module, so this is the one place to define the shared toolset.

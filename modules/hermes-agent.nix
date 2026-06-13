@@ -38,7 +38,26 @@
     # the read-only /nix/store (OSError Errno 30) — so `provider=anthropic`
     # can't import `anthropic` and `hermes -z` dies. Pre-build it instead; the
     # module turns this into `package.override { extraDependencyGroups = … }`.
-    # Add more as she needs them, e.g. "messaging" (telegram) or "voice".
-    extraDependencyGroups = [ "anthropic" ];
+    # This is hermes's `full` set MINUS the two that balloon every build + ISO:
+    # `voice` (faster-whisper / heavy ML) and `matrix` (liboqs). Add either here
+    # if she needs speech / matrix.
+    extraDependencyGroups = [
+      "anthropic"      # native Claude provider
+      "azure-identity"
+      "bedrock"
+      "daytona"
+      "dingtalk"
+      "edge-tts"
+      "exa"
+      "fal"
+      "feishu"
+      "firecrawl"
+      "hindsight"
+      "honcho"
+      "messaging"      # telegram / discord / slack
+      "modal"
+      "parallel-web"
+      "tts-premium"
+    ];
   };
 }
