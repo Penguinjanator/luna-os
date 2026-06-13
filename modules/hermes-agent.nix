@@ -38,9 +38,11 @@
     # the read-only /nix/store (OSError Errno 30) — so `provider=anthropic`
     # can't import `anthropic` and `hermes -z` dies. Pre-build it instead; the
     # module turns this into `package.override { extraDependencyGroups = … }`.
-    # This is hermes's `full` set MINUS the two that balloon every build + ISO:
-    # `voice` (faster-whisper / heavy ML) and `matrix` (liboqs). Add either here
-    # if she needs speech / matrix.
+    # hermes's COMPLETE `full` extras set, all pre-built so nothing lazy-installs
+    # at runtime (lazy-install can't write the read-only /nix/store). `matrix`
+    # (liboqs / post-quantum) and `voice` (faster-whisper / ML) are the heavy two
+    # — kept in so matrix + speech are ready without another rebuild. (matrix is
+    # Linux-only upstream, which luna-os always is, so it needs no isLinux gate.)
     extraDependencyGroups = [
       "anthropic"      # native Claude provider
       "azure-identity"
@@ -54,10 +56,12 @@
       "firecrawl"
       "hindsight"
       "honcho"
+      "matrix"         # matrix protocol (liboqs) — heavier
       "messaging"      # telegram / discord / slack
       "modal"
       "parallel-web"
       "tts-premium"
+      "voice"          # faster-whisper STT — heaviest (ML deps)
     ];
   };
 }
