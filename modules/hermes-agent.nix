@@ -32,5 +32,13 @@
     stateDir = "/var/lib/hermes"; # HERMES_HOME = /var/lib/hermes/.hermes
     addToSystemPackages = true; # put the `hermes` CLI on PATH — to talk to her,
     # and so new users can run `hermes setup` to drop in their own keys/profile.
+
+    # Provider SDKs are OPTIONAL extras in hermes, normally lazy-installed at
+    # runtime (tools/lazy_deps.py). On NixOS that fails — the Python env lives in
+    # the read-only /nix/store (OSError Errno 30) — so `provider=anthropic`
+    # can't import `anthropic` and `hermes -z` dies. Pre-build it instead; the
+    # module turns this into `package.override { extraDependencyGroups = … }`.
+    # Add more as she needs them, e.g. "messaging" (telegram) or "voice".
+    extraDependencyGroups = [ "anthropic" ];
   };
 }
