@@ -29,6 +29,11 @@
   };
   security.sudo.wheelNeedsPassword = false; # dangerous-af: frictionless root
 
+  # Allow unfree packages (Obsidian and friends). Personal build — we accept
+  # proprietary GUI apps. Set here in the shared base so it also covers the live
+  # ISOs, not just installed systems (configuration.nix is system-target only).
+  nixpkgs.config.allowUnfree = true;
+
   environment.etc."luna-os-release".text = "luna-os 0.0.1 (first light)\n";
 
   # LUNA-OS self-update plumbing. The flake fetches its private inputs (kernel +

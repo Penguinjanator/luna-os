@@ -26,5 +26,6 @@
     telegram-desktop
     fontconfig
     fsearch # fast GUI file search
+    obsidian # notes (unfree — allowed in luna.nix)
   ];
 }
