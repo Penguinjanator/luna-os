@@ -62,6 +62,15 @@
     # it at your checkout for a default: programs.nh.flake = "/home/luna/luna-os";
   };
 
+  # SSH server — remote login + scp/sftp into the box. (luna's password is set
+  # above; harden/lock it down before any real network exposure.)
+  services.openssh.enable = true;
+
+  # This kernel lacks the iptables rpfilter module, so NixOS's reverse-path check
+  # fails the firewall at start (`RULE_APPEND ... No such file`, exit 4). Skip
+  # that one rule; the firewall otherwise runs normally.
+  networking.firewall.checkReversePath = false;
+
   # A genuinely useful base userland so luna-os — and crucially both live ISOs —
   # isn't a bare minimal build. Every variant (daily, lab, and the two ISOs)
   # imports this module, so this is the one place to define the shared toolset.
@@ -108,5 +117,34 @@
     lsof
     psmisc # pstree, killall
     strace
+    ltrace # library-call trace (pairs with strace)
+    # security / crypto
+    openssl # `openssl rand`, certs, hashing — the thing that was missing
+    gnupg # gpg
+    pinentry-curses # gpg passphrase prompt on the console
+    # remote access
+    openssh # ssh / scp / sftp / ssh-keygen client (server = services.openssh)
+    # more networking
+    nettools # ifconfig, netstat, route, hostname
+    netcat-gnu # nc
+    socat
+    mtr # combined traceroute + ping
+    traceroute
+    whois
+    # text, files, pagers, archives
+    less # default pager (man, git, systemctl use it)
+    diffutils # diff, cmp
+    patch
+    gnumake # make — basic build glue
+    zstd
+    xz # xz / unxz
+    ncdu # interactive disk-usage browser
+    pv # pipe progress meter
+    # editors / shells
+    neovim
+    # system / hardware
+    dmidecode
+    lm_sensors # `sensors`
+    util-linux # lsblk, fdisk, hexdump, uuidgen, etc. (explicit; mostly in base)
   ];
 }
