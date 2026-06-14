@@ -13,11 +13,14 @@
 # the system finds its root either way.
 #
 # Single disk, GPT, UEFI: a 512 MB EFI System partition + an ext4 root.
-# `device = /dev/sda` is VirtualBox's default SATA disk. For NVMe use
-# /dev/nvme0n1; for a virtio disk (plain QEMU) use /dev/vda.
+# Parameterized on `disk` so luna-install can format the drive you pick from its
+# menu. The default (/dev/sda, VirtualBox's SATA disk) keeps the manual
+# `disko --mode disko ./disko.nix` route (README Route B) working unchanged.
+# NVMe = /dev/nvme0n1; virtio (plain QEMU) = /dev/vda.
+{ disk ? "/dev/sda", ... }:
 {
   disko.devices.disk.main = {
-    device = "/dev/sda";
+    device = disk;
     type = "disk";
     content = {
       type = "gpt";
