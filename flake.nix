@@ -26,6 +26,14 @@
     #     --override-input luna-kernel git+file:///home/potato/work-code/linux-master
     hermes.url = "git+ssh://git@github-penguin/Penguinjanator/hermes-but-better?ref=main";
 
+    # Luna's native face: Penguinjanator/luna-desktop (the `luna` Rust CLI today;
+    # KDE/GNOME surfaces later). Same git+ssh path; a plain source repo with no
+    # flake.nix, so flake = false and `${luna-desktop}/cli` is the crate.
+    luna-desktop = {
+      url = "git+ssh://git@github-penguin/Penguinjanator/luna-desktop?ref=main";
+      flake = false;
+    };
+
     # disko: declarative disk partitioning. Drives the baked-in `luna-install`
     # one-shot installer (disko.nix + modules/disk.nix). Follows our nixpkgs.
     disko = {
@@ -49,7 +57,7 @@
   # backward compatible: luna-os, luna-os-lab, luna-os-iso, luna-os-lab-iso are
   # the terminal points; desktops add a -gnome / -kde infix.
   outputs =
-    { self, nixpkgs, luna-kernel, hermes, disko, ... }:
+    { self, nixpkgs, luna-kernel, hermes, disko, luna-desktop, ... }:
     let
       system = "x86_64-linux";
       lib = nixpkgs.lib;
@@ -101,7 +109,7 @@
           inherit system;
           # Luna's brain (hermes) goes to every variant; the kernel source only
           # to the lab variants that build our custom kernel.
-          specialArgs = { inherit hermes self; }
+          specialArgs = { inherit hermes self luna-desktop; }
             // lib.optionalAttrs (kernel == "lab") { inherit luna-kernel; }
             # ISOs are self-contained installers: hand them disko + the name of
             # the system target to install (luna-os-kde-iso installs luna-os-kde).
@@ -114,7 +122,7 @@
             # System targets also layer in the disk + bootloader (modules/disk.nix)
             # so they install to a real disk: `nixos-install --flake .#luna-os-kde`.
             (if target == "iso" then [ isoProfile ] else [ ./configuration.nix ./modules/disk.nix ])
-            ++ [ ./modules/luna.nix ]
+            ++ [ ./modules/luna.nix ./modules/luna-desktop.nix ]
             ++ kernelLayer.${kernel}
             ++ desktopLayer.${desktop}
             ++ lib.optional (target == "iso" && desktop != "terminal") isoDesktopAutologin
