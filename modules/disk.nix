@@ -24,6 +24,10 @@
 
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
+  # Show the boot menu for a few seconds: needed to pick luna-os vs another OS in
+  # a dual-boot (systemd-boot auto-detects Windows/other EFI entries), and gives
+  # single-boot users the generation/rollback menu too.
+  boot.loader.timeout = 5;
 
   # initrd drivers needed to reach the root disk early: VirtualBox AHCI/SATA +
   # USB, and virtio for plain QEMU. (The lab kernel already carries these; the

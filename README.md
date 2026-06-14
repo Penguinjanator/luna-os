@@ -334,6 +334,30 @@ the key to `/root/.ssh/luna-os_ed25519` (mode `600`) on first boot.
 > distribute or back up a keyed ISO, and rotate the key if one ever leaks. Build
 > real images **without** the env var (keyless), and hand the key over per-machine.
 
+### Dual-boot (same disk, alongside another OS)
+
+`luna-install` can put luna-os next to an existing **UEFI** OS (e.g. Windows) on
+the same disk — sharing one EFI partition and one boot menu — without touching
+the other OS.
+
+**Prepare first, from your other OS:** shrink it and leave an **empty partition**
+for luna-os (Windows: *Disk Management → Shrink Volume*, then make a partition in
+the freed space — or leave it unallocated and create one with a live GParted).
+luna-install never resizes or repartitions; it only formats the empty partition
+you point it at.
+
+Then boot the ISO and choose dual-boot:
+```sh
+sudo luna-install      # option 2) Install alongside an existing OS
+```
+Pick the disk, then the **empty partition** for luna-os root. luna-install
+formats just that partition (`NIXROOT`), relabels the existing EFI partition to
+`NIXBOOT` (the FAT label only — the other OS's boot files are untouched), and
+installs. `systemd-boot` then lists **luna-os and your other OS** at startup.
+
+> Requires the other OS to be **UEFI** (so there's an EFI System Partition to
+> share). Legacy BIOS/MBR installs can't dual-boot this way.
+
 ---
 
 ## Build targets at a glance
