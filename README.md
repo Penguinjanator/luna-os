@@ -55,6 +55,71 @@ fonts, common apps). Copy the folder, drop in your `hardware-configuration.nix`
 
 ---
 
+## Configuration
+
+Everything is set through normal NixOS options, so you tune Luna right in your config.
+
+### luna-os's own options
+
+| Option | Default | What it does |
+|---|---|---|
+| `luna.passwordlessSudo` | `true` | Give the `wheel` group **passwordless sudo** — the "dangerous-af" default that lets the (un-sandboxed) agent reach the whole system as root. Set `false` for a safer install where Luna has only the user's own privileges. |
+| `luna.deployAlias` | `true` | Bake in the maintainer's `github-penguin` SSH alias (a private-era self-update convenience). Harmless to anyone else — the key won't exist — but vestigial now; set `false` to omit it. |
+
+### Configuring the agent — `services.hermes-agent`
+
+Luna's brain is the upstream **hermes-agent** NixOS module; luna-os enables it with
+sane defaults (runs as `luna`, state in `/var/lib/hermes`, the `luna` CLI on `PATH`,
+provider deps pre-built). Override anything:
+
+```nix
+services.hermes-agent = {
+  # Which model she thinks with (+ any config.yaml keys):
+  settings.model = "anthropic/claude-sonnet-4.6";
+  settings.toolsets = [ "all" ];
+
+  # API keys / secrets — merged into her .env at activation, never in the store:
+  environmentFiles = [ config.age.secrets."hermes-env".path ];  # agenix/sops, or a plain file
+
+  # Pre-build Python deps for a skill/provider so nothing lazy-installs at runtime
+  # (the read-only Nix venv can't pip-install). These are pyproject extras:
+  extraDependencyGroups = [ "google" "youtube" "anthropic" ];
+
+  # Extra tools + MCP servers for her to use:
+  extraPackages = [ pkgs.ffmpeg pkgs.imagemagick ];
+  mcpServers.filesystem = {
+    command = "npx";
+    args = [ "-y" "@modelcontextprotocol/server-filesystem" "/home/luna" ];
+  };
+};
+```
+
+The common knobs:
+
+| Option | What it's for |
+|---|---|
+| `settings` | Her `config.yaml` (model, toolsets, compression, …) — a free-form attrset deep-merged into the file. |
+| `environmentFiles` / `environment` | Secret / non-secret env, merged into her `.env` at activation (keys never hit the store). |
+| `extraDependencyGroups` | Pre-build skill/provider Python deps (pyproject extras) so they don't lazy-install at runtime. |
+| `extraPackages` / `extraPlugins` / `extraPythonPackages` | Extra CLI tools / hermes plugins / Python packages available to the agent. |
+| `mcpServers` | MCP servers (stdio or HTTP) she can call. |
+| `user` / `group` / `stateDir` / `workingDirectory` | Who she runs as and where her state lives. |
+
+The full option set lives in the
+[hermes-agent module](https://github.com/Penguinjanator/hermes-but-better/blob/main/nix/nixosModules.nix).
+
+> Her **identity + secrets** (API keys, persona, memory) usually don't go in the
+> config — they live in the `.hermes` bundle you drop in per machine (see *Seeding
+> Luna* below). `environmentFiles` is the declarative way to inject *just* the API
+> keys if you'd rather keep them in your secret store.
+
+### Desktop & kernel
+
+`nixosModules.kde` / `.gnome` add the session + her chat widget (no options).
+`nixosModules.lab-kernel` switches you to the custom kernel (no options — import it or don't).
+
+---
+
 ## "Wait — how can a few files be a whole system?"
 
 On a normal OS, the system *is* the millions of files on disk. On **NixOS, the
