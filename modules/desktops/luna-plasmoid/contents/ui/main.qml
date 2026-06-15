@@ -27,27 +27,13 @@ PlasmoidItem {
         Component.onCompleted: connectSource("cat /var/lib/hermes/dashboard.env")
     }
 
-    // --- panel icon: a glossy neon orb ---
+    // --- panel icon: Luna's glossy crescent-moon orb ---
     compactRepresentation: Item {
         Layout.minimumWidth: Kirigami.Units.iconSizes.medium
         Layout.minimumHeight: Kirigami.Units.iconSizes.medium
 
-        Rectangle {
+        LunaLogo {
             anchors.fill: parent
-            radius: width / 2
-            gradient: Gradient {
-                GradientStop { position: 0.0; color: Theme.accentTop }
-                GradientStop { position: 1.0; color: Theme.accentBot }
-            }
-            border.width: 1
-            border.color: Theme.glassEdge
-            QQC2.Label {
-                anchors.centerIn: parent
-                text: "L"
-                color: "white"
-                font.bold: true
-                font.pixelSize: parent.height * 0.55
-            }
         }
         MouseArea {
             anchors.fill: parent
@@ -98,6 +84,12 @@ PlasmoidItem {
             RowLayout {
                 Layout.fillWidth: true
                 spacing: Kirigami.Units.smallSpacing
+
+                LunaLogo {
+                    Layout.preferredWidth: 22
+                    Layout.preferredHeight: 22
+                    Layout.alignment: Qt.AlignVCenter
+                }
 
                 ListView {
                     id: tabStrip

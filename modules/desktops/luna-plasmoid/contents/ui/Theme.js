@@ -1,44 +1,46 @@
 .pragma library
-// Luna's look — frutiger-aero-vaporwave. Glassy translucent panels (Aero gloss)
-// floating over a neon dusk gradient (vaporwave). One palette, shared by every
-// tab, bubble, and button. Mirrored in the GNOME extension's CSS.
+// Luna's look — frutiger aero. Glossy and glassy, bright and optimistic: aqua,
+// sky-blue and fresh green over a clean light-glass gradient, water-clear
+// translucency and white-gloss highlights. (Dialed brighter + calmer than the
+// first vaporwave pass — meant to feel like a native glossy panel.)
 
-// --- vaporwave neons ---
-var pink     = "#ff71ce";
-var cyan     = "#05ffd6";
-var purple   = "#b967ff";
-var blue     = "#4d8aff";
-var mint     = "#7bf1a8";
-var lavender = "#c8a2ff";
+// --- aero brights ---
+var aqua      = "#3fc9f5";
+var sky       = "#4f9eea";
+var skyDeep   = "#2e7fd0";
+var green     = "#7fd96a";
+var greenDeep = "#4fb24a";
+var white     = "#ffffff";
 
-// --- background: deep dusk gradient (indigo -> plum -> teal) ---
-var bgTop    = "#1b1033";
-var bgMid    = "#3a1d5e";
-var bgBottom = "#0e2b3d";
+// --- background: bright sky -> aqua -> mint glass ---
+var bgTop    = "#e6f5ff";
+var bgMid    = "#d6edfb";
+var bgBottom = "#e8f8ef";
 
-// --- glass (Aero gloss) ---
-function glass(a)       { return Qt.rgba(1, 1, 1, a === undefined ? 0.10 : a); }
-var glassFill   = Qt.rgba(1, 1, 1, 0.10);
-var glassStrong = Qt.rgba(1, 1, 1, 0.18);
-var glassEdge   = Qt.rgba(1, 1, 1, 0.38);   // top highlight / hairline borders
-var glassShadow = Qt.rgba(0, 0, 0, 0.35);
+// --- glass (Aero gloss: light translucent whites with a cool edge) ---
+function glass(a) { return Qt.rgba(1, 1, 1, a === undefined ? 0.42 : a); }
+var glassFill   = Qt.rgba(1, 1, 1, 0.42);
+var glassStrong = Qt.rgba(1, 1, 1, 0.66);
+var glassEdge   = Qt.rgba(1, 1, 1, 0.88);
+var glassShadow = Qt.rgba(0.08, 0.32, 0.50, 0.22);
 
 // --- text ---
-var text    = "#f4ecff";
-var textDim = Qt.rgba(1, 1, 1, 0.62);
+var text       = "#143a52";                       // deep slate-blue on light glass
+var textDim    = Qt.rgba(0.08, 0.23, 0.32, 0.55);
+var bubbleText = "#ffffff";                        // on the glossy colored bubbles
 
-// --- chat bubbles (glassy gradients) ---
-// Luna speaks in pink->purple; you speak in cyan->blue.
-var lunaTop = Qt.rgba(1.00, 0.44, 0.81, 0.30);
-var lunaBot = Qt.rgba(0.73, 0.40, 1.00, 0.30);
-var youTop  = Qt.rgba(0.02, 1.00, 0.84, 0.26);
-var youBot  = Qt.rgba(0.30, 0.54, 1.00, 0.26);
+// --- chat bubbles (glossy gradients) ---
+// Luna speaks in aqua->sky; you speak in fresh green.
+var lunaTop = Qt.rgba(0.25, 0.79, 0.96, 0.94);
+var lunaBot = Qt.rgba(0.18, 0.55, 0.85, 0.94);
+var youTop  = Qt.rgba(0.50, 0.85, 0.42, 0.94);
+var youBot  = Qt.rgba(0.31, 0.70, 0.29, 0.94);
 
-// --- accent (active tab, send button) ---
-var accentTop = "#ff71ce";
-var accentBot = "#b967ff";
+// --- accent (orb, send button) ---
+var accentTop = "#5bd6f0";
+var accentBot = "#2e7fd0";
 
 // --- metrics ---
 var radius      = 16;
 var radiusSmall = 10;
-var glow        = 18;   // soft-glow blur radius for accents
+var glow        = 16;

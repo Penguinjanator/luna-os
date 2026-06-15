@@ -115,7 +115,7 @@ Item {
                         anchors.fill: parent
                         anchors.margins: 10
                         text: model.text.length ? model.text : "…"
-                        color: Theme.text
+                        color: Theme.bubbleText
                         wrapMode: Text.Wrap
                         textFormat: Text.PlainText
                     }
