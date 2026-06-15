@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Controls as QQC2
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.plasmoid
+import org.kde.plasma.plasma5support as P5Support
 import "Api.js" as Api
 import "Theme.js" as Theme
 
@@ -10,6 +11,21 @@ PlasmoidItem {
     id: root
     Plasmoid.title: "Luna"
     preferredRepresentation: compactRepresentation
+
+    // Read the dashboard token once on load. QML's XMLHttpRequest can't read
+    // local files, but the Plasma executable engine can -- cat the dashboard's
+    // EnvironmentFile and hand the token to Api. Lives at the root (not in the
+    // popup) so the token is ready well before the popup is first opened.
+    P5Support.DataSource {
+        id: tokenReader
+        engine: "executable"
+        connectedSources: []
+        onNewData: function (source, data) {
+            disconnectSource(source);
+            Api.setToken(Api.parseToken(data["stdout"]));
+        }
+        Component.onCompleted: connectSource("cat /var/lib/hermes/dashboard.env")
+    }
 
     // --- panel icon: a glossy neon orb ---
     compactRepresentation: Item {

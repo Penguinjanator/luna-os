@@ -4,34 +4,31 @@
 // and the session endpoints — each chat TAB is one Hermes session.
 
 var BASE = "http://127.0.0.1:9119";
-var TOKEN_FILE = "file:///var/lib/hermes/dashboard.env";
 var HEADER = "X-Hermes-Session-Token";
-var _TOKEN_KEY = "HERMES_DASHBOARD_SESSION_TOKEN=";
+var TOKEN_ENV_KEY = "HERMES_DASHBOARD_SESSION_TOKEN=";
 
-// Read the per-machine session token luna-os mints into the dashboard's
-// EnvironmentFile (the same file the `luna` CLI falls back to). Synchronous: a
-// tiny local file we need before each request. "" if unreadable.
-function token() {
-    try {
-        var xhr = new XMLHttpRequest();
-        xhr.open("GET", TOKEN_FILE, false);
-        xhr.send();
-        var lines = (xhr.responseText || "").split("\n");
-        for (var i = 0; i < lines.length; i++) {
-            var line = lines[i].trim();
-            if (line.indexOf(_TOKEN_KEY) === 0)
-                return line.substring(_TOKEN_KEY.length).trim();
-        }
-    } catch (e) {}
+// The dashboard session token. QML's XMLHttpRequest CAN'T read local files
+// (Qt blocks file:// reads unless QML_XHR_ALLOW_FILE_READ=1), so main.qml reads
+// the dashboard's EnvironmentFile through the Plasma executable data source and
+// hands the token here once at load. parseToken pulls it from the KEY=value file.
+var _token = "";
+function setToken(t) { _token = t || ""; }
+function hasToken() { return _token.length > 0; }
+function parseToken(fileContents) {
+    var lines = (fileContents || "").split("\n");
+    for (var i = 0; i < lines.length; i++) {
+        var line = lines[i].trim();
+        if (line.indexOf(TOKEN_ENV_KEY) === 0)
+            return line.substring(TOKEN_ENV_KEY.length).trim();
+    }
     return "";
 }
 
 function _open(method, path) {
     var xhr = new XMLHttpRequest();
     xhr.open(method, BASE + path);
-    var t = token();
-    if (t)
-        xhr.setRequestHeader(HEADER, t);
+    if (_token)
+        xhr.setRequestHeader(HEADER, _token);
     return xhr;
 }
 
@@ -107,8 +104,14 @@ function streamChat(message, sessionId, onDelta, onDone, onError) {
                     onError(ev.error || "unknown error");
             }
         }
-        if (xhr.readyState === 4 && xhr.status !== 200)
-            onError("HTTP " + xhr.status + " — is the dashboard running?");
+        if (xhr.readyState === 4 && xhr.status !== 200) {
+            if (xhr.status === 401 || xhr.status === 403)
+                onError("auth rejected (" + xhr.status + ") — token mismatch");
+            else if (xhr.status === 0)
+                onError("can't reach the dashboard — is it running?");
+            else
+                onError("HTTP " + xhr.status);
+        }
     };
     var body = { "message": message };
     if (sessionId)
