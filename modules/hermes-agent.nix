@@ -15,7 +15,7 @@
 #
 # NEXT (step 1b): her secrets (API keys/tokens) via agenix → `environmentFiles`,
 # and her Luna profile bundle seeded into `${stateDir}/.hermes`.
-{ hermes, ... }:
+{ hermes, lib, ... }:
 {
   imports = [ hermes.nixosModules.default ];
 
@@ -62,6 +62,25 @@
       "parallel-web"
       "tts-premium"
       "voice"          # faster-whisper STT — heaviest (ML deps)
+      # Skill deps. These are real pyproject extras (and even live in `all`), but
+      # they only reach the sealed venv when named DIRECTLY here -- the
+      # self-referential `hermes-agent[google]` nesting inside `all` doesn't
+      # expand through uv2nix. Without them the google-workspace / youtube skills
+      # hit lazy_deps.py's runtime `pip install`, which can't write the read-only
+      # Nix venv (OSError 30) and fails.
+      "google"         # google-workspace skill (Gmail/Calendar/Drive/Docs/Sheets)
+      "youtube"        # youtube-transcript skills
     ];
+  };
+
+  # Un-sandbox the gateway service too. The hermes module hardens it with
+  # ProtectSystem=strict + NoNewPrivileges, which wall Luna into /var/lib/hermes
+  # (read-only elsewhere) and block sudo from escalating -- sandboxing her own
+  # tool use against the "dangerous-af" full-reach posture. Override them off,
+  # same reasoning as hermes-dashboard.nix. NixOS generations are the seatbelt.
+  systemd.services.hermes-agent.serviceConfig = {
+    ProtectSystem = lib.mkForce false;
+    NoNewPrivileges = lib.mkForce false;
+    PrivateTmp = lib.mkForce false;
   };
 }

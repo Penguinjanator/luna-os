@@ -88,12 +88,12 @@ in
       # group-writable so the gateway service (same group) can touch them too.
       UMask = "0007";
 
-      # Hardening — mirror the gateway service.
-      NoNewPrivileges = true;
-      ProtectSystem = "strict";
-      ProtectHome = false;
-      ReadWritePaths = [ stateDir cfg.workingDirectory ];
-      PrivateTmp = true;
+      # NO systemd sandbox. Luna serves /api/chat here and runs the REAL agent
+      # with tools (YOLO) -- the "dangerous-af" posture wants FULL system reach.
+      # ProtectSystem=strict would make everything outside /var/lib/hermes
+      # read-only, and NoNewPrivileges would block sudo from escalating -- either
+      # one sandboxes her own tool use. NixOS generations are the seatbelt; a
+      # blast-radius cage is a later, configurable layer.
     };
 
     path = [ hermesPkg pkgs.bash pkgs.coreutils pkgs.git ];
