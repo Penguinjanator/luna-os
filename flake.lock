@@ -51,11 +51,11 @@
         "uv2nix": "uv2nix_2"
       },
       "locked": {
-        "lastModified": 1781450995,
-        "narHash": "sha256-y1jz3xyzezFp27TO6FT6zaUjDucIgtKO1goG8qooOjM=",
+        "lastModified": 1781506636,
+        "narHash": "sha256-FOLgiIJuVpYdrZWhXpY/MP6Ik6K6s2cTc+5pY9Oovds=",
         "ref": "main",
-        "rev": "a05e8ba121ebf7b5c3d814cb13d4cbecb958d175",
-        "revCount": 11342,
+        "rev": "2a2951d88df0ad0addc2fcbdd2f53a69c8c2269c",
+        "revCount": 11343,
         "type": "git",
         "url": "ssh://git@github-penguin/Penguinjanator/hermes-but-better"
       },
@@ -68,11 +68,11 @@
     "luna-desktop": {
       "flake": false,
       "locked": {
-        "lastModified": 1781451389,
-        "narHash": "sha256-BruGJZcCHQIBRtbkbZ8ieNRJfPI/EZ3CFOIYoC4JBWY=",
+        "lastModified": 1781506656,
+        "narHash": "sha256-Yr9j2XRG1bZuDfMfxVkwoh4lhCfSlYNYMnLG5SwdTGQ=",
         "ref": "main",
-        "rev": "03caaba759e9bb0b5f6b9c54f75ef36af418911c",
-        "revCount": 2,
+        "rev": "b62af780a53f42ef8034e73b0dc1c25ae12a361b",
+        "revCount": 3,
         "type": "git",
         "url": "ssh://git@github-penguin/Penguinjanator/luna-desktop"
       },
