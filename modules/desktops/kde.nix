@@ -7,8 +7,7 @@
 { pkgs, ... }:
 {
   imports = [
-    ./luna-launchers.nix # "Chat with Luna" / "Ask Luna" menu entries
-    ./luna-widget.nix    # the Luna chat plasmoid (panel widget)
+    ./luna-launchers.nix # launcher + tray autostart for the `luna gui` chat app
   ];
 
   # X stack (also provides XWayland + xkb config for the default Wayland session).

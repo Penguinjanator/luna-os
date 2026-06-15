@@ -3,8 +3,9 @@
 **Luna** — an AI agent (a fork of the [Hermes](https://github.com/NousResearch/hermes-agent)
 agent, persona "Luna") woven into NixOS as **modules you add to any NixOS config**.
 Drop her in and you get an always-on agent + a local dashboard, a `luna` CLI, and
-a native **frosted-glass chat widget** in your panel — all declarative, all
-rolled back instantly by NixOS generations.
+a native **frosted-glass chat app** — a window plus a crescent-moon tray icon that
+work on every desktop — all declarative, all rolled back instantly by NixOS
+generations.
 
 > luna-os used to be a whole bespoke OS (a kernel × desktop × target matrix). It's
 > now a **library**: the real product is the `nixosModules` you import. The custom
@@ -40,7 +41,7 @@ stays put.
 | Module | What it adds |
 |---|---|
 | `nixosModules.luna` (= `default`) | The core stack: the Hermes agent + dashboard services, the base userland, the `luna` CLI, Luna's identity. Stock kernel, runs anywhere. |
-| `nixosModules.kde` / `.gnome` | A desktop session **+ Luna's chat widget + launchers** (pick one). |
+| `nixosModules.kde` / `.gnome` | A desktop session **+ Luna's chat app** — the "Chat with Luna" launcher + her panel tray (pick one). |
 | `nixosModules.lab-kernel` | **Optional** — our custom Linux 7.1.0-rc7 kernel: the future home of a `/dev/hermes` channel + an LSM cage. The one piece that carries a heavy build, so import it only if you want it. |
 
 Each module closes over Luna's own inputs, so you import them with **no inputs or
@@ -142,15 +143,18 @@ edit the system:
 
 ## Talk to her
 
-- **Panel widget** (KDE/GNOME): a frosted-glass chat with **tabs** — each tab is a
-  conversation that **persists across reboots** — streaming replies, copy/paste,
-  and a stop button. Click the crescent-moon icon in your bar.
+- **The chat app** — `luna gui`: a frosted-glass window + a **crescent-moon tray
+  icon** that work on **every** desktop (KDE, GNOME, XFCE, Cinnamon, MATE, Budgie,
+  LXQt, Pantheon…). **Tabs** are conversations that **persist across reboots**;
+  replies stream, text is selectable, there's a stop button, and she fires a
+  desktop **notification** when she answers while you're elsewhere. Open it from
+  "Chat with Luna" in your menu or the tray — it autostarts into the tray at login.
 - **`luna chat "…"`** / **`luna repl`** — stream her reply in a terminal;
   conversations thread, so she remembers (`luna chat --new` starts fresh).
 - **`luna ask "…"`** — a zero-setup one-shot (no dashboard needed).
 - **`luna status` / `luna sessions`** — what she's doing / recent conversations.
 
-The dashboard that backs the widget + `luna chat` runs as a service automatically;
+The dashboard that backs the app + `luna chat` runs as a service automatically;
 it mints its own per-machine auth token, so this all works on a fresh boot with
 zero setup.
 

@@ -67,11 +67,11 @@
     "luna-desktop": {
       "flake": false,
       "locked": {
-        "lastModified": 1781506656,
-        "narHash": "sha256-Yr9j2XRG1bZuDfMfxVkwoh4lhCfSlYNYMnLG5SwdTGQ=",
+        "lastModified": 1781525566,
+        "narHash": "sha256-ox+8xGST1k775ihZcR4BR579tg1T7pyIOL4bZd4bnmo=",
         "owner": "Penguinjanator",
         "repo": "luna-desktop",
-        "rev": "b62af780a53f42ef8034e73b0dc1c25ae12a361b",
+        "rev": "6c364f040e7451597329018178879906df07d149",
         "type": "github"
       },
       "original": {

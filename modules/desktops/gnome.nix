@@ -29,5 +29,16 @@
     fontconfig
     fsearch # fast GUI file search
     obsidian # notes (unfree — allowed in luna.nix)
+    # GNOME hides StatusNotifierItem trays by default, so Luna's tray (the
+    # crescent from `luna gui`) wouldn't show. This extension restores SNI/
+    # AppIndicator support in the top bar; it's enabled by the override below.
+    gnomeExtensions.appindicator
   ];
+
+  # Enable the AppIndicator extension by default so the tray appears on first
+  # login (every other desktop in our matrix shows SNI natively).
+  services.desktopManager.gnome.extraGSettingsOverrides = ''
+    [org.gnome.shell]
+    enabled-extensions=['appindicatorsupport@rgcjonas.gmail.com']
+  '';
 }
