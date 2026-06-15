@@ -25,6 +25,12 @@ let
     echo ">>> luna-rebuild: nixos-rebuild $sub --flake $cfg#$host" >&2
     exec sudo nixos-rebuild "$sub" --flake "$cfg#$host" "$@"
   '';
+
+  # Bootstrap the local editable flake on an EXISTING machine (the installer does
+  # this for fresh installs). Real .sh file so its heredocs don't fight Nix.
+  lunaSelfSetup = pkgs.writeShellScriptBin "luna-self-setup"
+    (builtins.replaceStrings [ "@CONFIGPATH@" ] [ cfg.configPath ]
+      (builtins.readFile ./luna-self-setup.sh));
 in
 {
   options.luna.configPath = lib.mkOption {
@@ -40,7 +46,7 @@ in
   };
 
   config = {
-    environment.systemPackages = [ lunaRebuild ];
+    environment.systemPackages = [ lunaRebuild lunaSelfSetup ];
     # So Luna's shells (and anything she spawns) know where her config lives.
     environment.variables.LUNA_OS_CONFIG = cfg.configPath;
   };
