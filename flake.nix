@@ -122,7 +122,7 @@
             # System targets also layer in the disk + bootloader (modules/disk.nix)
             # so they install to a real disk: `nixos-install --flake .#luna-os-kde`.
             (if target == "iso" then [ isoProfile ] else [ ./configuration.nix ./modules/disk.nix ])
-            ++ [ ./modules/luna.nix ./modules/luna-desktop.nix ]
+            ++ [ hermes.nixosModules.default ./modules/luna.nix ./modules/luna-desktop.nix ]
             ++ kernelLayer.${kernel}
             ++ desktopLayer.${desktop}
             ++ lib.optional (target == "iso" && desktop != "terminal") isoDesktopAutologin
@@ -173,6 +173,39 @@
         kernels;
     in
     {
+      # ── Luna as a LIBRARY ────────────────────────────────────────────────
+      # Add these to ANY NixOS config to get Luna — no custom kernel, no bespoke
+      # OS. Each module closes over our private inputs (hermes, luna-desktop,
+      # luna-kernel), so a consumer just imports it; they need neither the inputs
+      # nor specialArgs. A downstream flake does:
+      #     imports = [ luna-os.nixosModules.luna luna-os.nixosModules.kde ];
+      # and `nix flake update luna-os` pulls our updates while their config (and
+      # Luna's own self-edits) stay put.
+      nixosModules = {
+        # The core Luna stack: the Hermes agent + dashboard services, the base
+        # userland, the `luna` CLI, and Luna's identity. Stock kernel — runs
+        # anywhere.
+        luna = { ... }: {
+          imports = [ hermes.nixosModules.default ./modules/luna.nix ./modules/luna-desktop.nix ];
+          _module.args = { inherit luna-desktop; };
+        };
+
+        # Desktop surface (pick one, alongside `luna`): the Plasma / GNOME
+        # session plus Luna's chat widget + launchers.
+        kde = { ... }: { imports = [ ./modules/desktops/kde.nix ]; };
+        gnome = { ... }: { imports = [ ./modules/desktops/gnome.nix ]; };
+
+        # OPTIONAL: our custom 7.1.0-rc7 kernel — the future home of a
+        # /dev/hermes channel + an LSM cage. Import ONLY if you want it; it's the
+        # one piece that carries a heavy build. Everything else is stock-kernel.
+        lab-kernel = { ... }: {
+          imports = [ ./modules/hermes-kernel.nix ];
+          _module.args = { inherit luna-kernel; };
+        };
+
+        default = self.nixosModules.luna;
+      };
+
       nixosConfigurations = lib.listToAttrs (map
         (pt: { name = sysName pt; value = mkSystem pt; })
         matrix);

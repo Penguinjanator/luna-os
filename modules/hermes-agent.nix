@@ -15,9 +15,13 @@
 #
 # NEXT (step 1b): her secrets (API keys/tokens) via agenix → `environmentFiles`,
 # and her Luna profile bundle seeded into `${stateDir}/.hermes`.
-{ hermes, lib, ... }:
+{ lib, ... }:
 {
-  imports = [ hermes.nixosModules.default ];
+  # The hermes NixOS module (services.hermes-agent) is imported from FLAKE SCOPE
+  # -- by nixosModules.luna / mkSystem, where the `hermes` input lives -- not
+  # here: using an input as a module ARG inside `imports` infinite-recurses for
+  # an exported module (the arg isn't ready until the config fixpoint, but
+  # imports are resolved before it). So this file only CONFIGURES the service.
 
   services.hermes-agent = {
     enable = true;
