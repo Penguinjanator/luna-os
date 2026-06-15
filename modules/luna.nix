@@ -12,6 +12,7 @@
 {
   imports = [
     ./hermes-agent.nix
+    ./hermes-dashboard.nix
     ./dev.nix
   ];
 
