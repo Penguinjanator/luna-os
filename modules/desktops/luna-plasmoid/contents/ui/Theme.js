@@ -13,10 +13,12 @@ var skyDeep   = "#2e7fd0";
 var green      = "#7fd96a";
 var greenDeep = "#4fb24a";
 
-// --- panel: translucent DARK tint, so the blur + desktop bleed through ---
-var bgTop    = Qt.rgba(0.07, 0.12, 0.21, 0.45);
-var bgMid    = Qt.rgba(0.05, 0.09, 0.16, 0.52);
-var bgBottom = Qt.rgba(0.03, 0.06, 0.12, 0.58);
+// --- panel: CLEARER translucent tint. The readable text lives in the bubbles
+// now, so the background can go watery -- a light cool-cyan glass that lets the
+// blur + desktop bleed through (paired with the drifting WaterOverlay). ---
+var bgTop    = Qt.rgba(0.10, 0.20, 0.32, 0.24);
+var bgMid    = Qt.rgba(0.07, 0.16, 0.28, 0.28);
+var bgBottom = Qt.rgba(0.05, 0.12, 0.24, 0.32);
 
 // --- glass elements (light translucent on the dark panel) ---
 function glass(a) { return Qt.rgba(1, 1, 1, a === undefined ? 0.10 : a); }
@@ -40,6 +42,10 @@ var youBot  = Qt.rgba(0.31, 0.66, 0.29, 0.85);
 // --- accent (orb, send button) ---
 var accentTop = "#5bd6f0";
 var accentBot = "#2e7fd0";
+
+// --- stop (the send button turns coral while she's thinking) ---
+var stopTop = "#ff8a8a";
+var stopBot = "#e0455e";
 
 // --- metrics ---
 var radius      = 16;

@@ -14,6 +14,8 @@ Item {
     property string sessionId: ""
     property bool busy: false
     property bool titled: false
+    property var activeXhr: null   // the in-flight /api/chat request, for stop()
+    property bool stopping: false
     signal titled_(string title)   // emitted once, so the tab strip can label it
 
     ListModel { id: messages }     // { role: "you"|"luna", text: "" }
@@ -52,7 +54,7 @@ Item {
         _append("luna", "");       // the bubble we stream into
         var idx = messages.count - 1;
         busy = true;
-        Api.streamChat(text, sessionId,
+        tab.activeXhr = Api.streamChat(text, sessionId,
             function (delta) {
                 messages.setProperty(idx, "text", messages.get(idx).text + delta);
                 listView.positionViewAtEnd();
@@ -63,6 +65,7 @@ Item {
                 if (finalText && !messages.get(idx).text)
                     messages.setProperty(idx, "text", finalText);
                 busy = false;
+                tab.activeXhr = null;
                 if (!titled && tab.sessionId) {
                     var t = text.length > 40 ? text.substring(0, 40) + "…" : text;
                     Api.setTitle(tab.sessionId, t);
@@ -71,9 +74,30 @@ Item {
                 }
             },
             function (err) {
-                messages.setProperty(idx, "text", "⚠ " + err);
                 busy = false;
+                tab.activeXhr = null;
+                if (tab.stopping) {        // aborted by stop(), not a real error
+                    tab.stopping = false;
+                    return;
+                }
+                messages.setProperty(idx, "text", "⚠ " + err);
             });
+    }
+
+    // Emergency stop: abort the in-flight request and mark the bubble.
+    function stop() {
+        if (!busy)
+            return;
+        stopping = true;
+        var x = tab.activeXhr;
+        tab.activeXhr = null;
+        if (x) {
+            try { x.abort(); } catch (e) {}
+        }
+        busy = false;
+        var i = messages.count - 1;
+        if (i >= 0 && messages.get(i).role === "luna")
+            messages.setProperty(i, "text", (messages.get(i).text || "") + "  ⏹");
     }
 
     ColumnLayout {
@@ -99,8 +123,8 @@ Item {
 
                 Rectangle {
                     id: bubble
-                    width: empty ? 56 : Math.min(parent.width * 0.82, label.implicitWidth + 28)
-                    height: empty ? 32 : label.implicitHeight + 20
+                    width: empty ? 54 : Math.min(parent.width * 0.84, content.implicitWidth + 24)
+                    height: empty ? 30 : content.implicitHeight + 18
                     radius: Theme.radius
                     anchors.right: mine ? parent.right : undefined
                     anchors.left: mine ? undefined : parent.left
@@ -109,26 +133,32 @@ Item {
                         GradientStop { position: 1.0; color: mine ? Theme.youBot : Theme.lunaBot }
                     }
 
-                    // Aero gloss: a soft white sheen across the top half
+                    // Aero gloss: a soft white sheen across the top
                     Rectangle {
                         anchors { left: parent.left; right: parent.right; top: parent.top }
-                        height: parent.height * 0.52
+                        height: parent.height * 0.5
                         radius: parent.radius
                         gradient: Gradient {
-                            GradientStop { position: 0.0; color: Qt.rgba(1, 1, 1, 0.30) }
+                            GradientStop { position: 0.0; color: Qt.rgba(1, 1, 1, 0.22) }
                             GradientStop { position: 1.0; color: Qt.rgba(1, 1, 1, 0.0) }
                         }
                     }
 
-                    QQC2.Label {
-                        id: label
+                    // Read-only but selectable: drag to highlight, Ctrl+C to copy.
+                    TextEdit {
+                        id: content
                         visible: !empty
-                        anchors.fill: parent
-                        anchors.margins: 10
+                        x: 12
+                        y: 9
+                        width: parent.width - 24
                         text: model.text
                         color: Theme.bubbleText
-                        wrapMode: Text.Wrap
-                        textFormat: Text.PlainText
+                        readOnly: true
+                        selectByMouse: true
+                        persistentSelection: true
+                        selectionColor: Qt.rgba(1, 1, 1, 0.35)
+                        wrapMode: TextEdit.Wrap
+                        textFormat: TextEdit.PlainText
                     }
 
                     TypingDots {
@@ -169,10 +199,9 @@ Item {
                 width: height
                 height: input.implicitHeight + 12
                 radius: Theme.radiusSmall
-                opacity: tab.busy ? 0.5 : 1.0
                 gradient: Gradient {
-                    GradientStop { position: 0.0; color: Theme.accentTop }
-                    GradientStop { position: 1.0; color: Theme.accentBot }
+                    GradientStop { position: 0.0; color: tab.busy ? Theme.stopTop : Theme.accentTop }
+                    GradientStop { position: 1.0; color: tab.busy ? Theme.stopBot : Theme.accentBot }
                 }
 
                 // Aero gloss sheen
@@ -188,14 +217,21 @@ Item {
 
                 QQC2.Label {
                     anchors.centerIn: parent
-                    text: "➤"
+                    text: tab.busy ? "■" : "➤"   // stop while thinking, else send
                     color: "white"
                     font.bold: true
                 }
                 MouseArea {
                     anchors.fill: parent
-                    enabled: !tab.busy
-                    onClicked: { tab.send(input.text); input.text = ""; }
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        if (tab.busy) {
+                            tab.stop();
+                        } else {
+                            tab.send(input.text);
+                            input.text = "";
+                        }
+                    }
                 }
             }
         }

@@ -55,6 +55,7 @@ PlasmoidItem {
         function addTab(sessionId, title) {
             tabsModel.append({ "title": title || "New chat", "sessionId": sessionId || "" });
             stack.currentIndex = tabsModel.count - 1;
+            persistTabs();
         }
         function closeTab(i) {
             tabsModel.remove(i);
@@ -62,9 +63,34 @@ PlasmoidItem {
                 addTab("", "New chat");
             else
                 stack.currentIndex = Math.min(stack.currentIndex, tabsModel.count - 1);
+            persistTabs();
         }
 
-        Component.onCompleted: addTab("", "New chat")
+        // Remember which conversations are open (id + title) so they come back
+        // after logout / reboot. The MESSAGES already persist server-side in the
+        // dashboard's SessionDB; this just restores the tabs and reloads them.
+        function persistTabs() {
+            var arr = [];
+            for (var i = 0; i < tabsModel.count; i++) {
+                var t = tabsModel.get(i);
+                if (t.sessionId)
+                    arr.push({ "id": t.sessionId, "title": t.title });
+            }
+            Plasmoid.configuration.openTabs = JSON.stringify(arr);
+        }
+
+        Component.onCompleted: {
+            var saved = [];
+            try { saved = JSON.parse(Plasmoid.configuration.openTabs || "[]"); }
+            catch (e) { saved = []; }
+            if (saved.length) {
+                for (var i = 0; i < saved.length; i++)
+                    addTab(saved[i].id, saved[i].title);
+                stack.currentIndex = 0;
+            } else {
+                addTab("", "New chat");
+            }
+        }
 
         Rectangle {
             anchors.fill: parent
@@ -73,6 +99,11 @@ PlasmoidItem {
                 GradientStop { position: 0.5; color: Theme.bgMid }
                 GradientStop { position: 1.0; color: Theme.bgBottom }
             }
+        }
+
+        // drifting liquid-glass waves over the clear panel
+        WaterOverlay {
+            anchors.fill: parent
         }
 
         ColumnLayout {
@@ -174,7 +205,17 @@ PlasmoidItem {
                             if (sessionId)
                                 loadHistory();
                         }
-                        onTitled_: tabsModel.setProperty(tabIndex, "title", title)
+                        onTitled_: {
+                            tabsModel.setProperty(tabIndex, "title", title);
+                            chatRoot.persistTabs();
+                        }
+                        // A fresh tab threads a session on its first reply -- write
+                        // the id back into the model and persist so it survives a
+                        // restart.
+                        onSessionIdChanged: {
+                            tabsModel.setProperty(tabIndex, "sessionId", sessionId);
+                            chatRoot.persistTabs();
+                        }
                     }
                 }
             }

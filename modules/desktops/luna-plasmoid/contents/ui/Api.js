@@ -140,4 +140,5 @@ function streamChat(message, sessionId, onDelta, onDone, onError) {
     if (sessionId)
         body["session_id"] = sessionId;
     xhr.send(JSON.stringify(body));
+    return xhr;   // the caller keeps it so it can .abort() (the stop button)
 }
