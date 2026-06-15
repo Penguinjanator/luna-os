@@ -6,7 +6,10 @@
 # as its desktop. Terminal-only = none of these modules.
 { pkgs, ... }:
 {
-  imports = [ ./luna-launchers.nix ]; # "Chat with Luna" / "Ask Luna" menu entries
+  imports = [
+    ./luna-launchers.nix # "Chat with Luna" / "Ask Luna" menu entries
+    ./luna-search.nix    # "Ask Luna" from the GNOME overview search
+  ];
 
   # X stack (also provides XWayland + xkb config for the default Wayland session).
   services.xserver.enable = true;

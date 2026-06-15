@@ -27,10 +27,16 @@ let
     set -eu
     export PATH=${lib.makeBinPath [ pkgs.zenity pkgs.coreutils ]}:$PATH
 
-    question=$(zenity --entry \
-      --title="Ask Luna" \
-      --text="What do you want to ask Luna?" \
-      --width=440) || exit 0
+    # A query passed as $1 (KRunner / the GNOME search provider activate a result
+    # this way) skips the prompt; with no arg (the "Ask Luna" menu entry) we ask.
+    if [ "$#" -ge 1 ] && [ -n "$1" ]; then
+      question="$1"
+    else
+      question=$(zenity --entry \
+        --title="Ask Luna" \
+        --text="What do you want to ask Luna?" \
+        --width=440) || exit 0
+    fi
     [ -n "$question" ] || exit 0
 
     answer=$(mktemp)
