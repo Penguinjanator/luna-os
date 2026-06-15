@@ -8,9 +8,10 @@
 #
 # For now it imports the agent skeleton and drops a marker so we can confirm,
 # from inside the booted VM, that our own module is live.
-{ pkgs, ... }:
+{ config, lib, pkgs, ... }:
 {
   imports = [
+    ./luna-options.nix
     ./hermes-agent.nix
     ./hermes-dashboard.nix
     ./dev.nix
@@ -28,7 +29,9 @@
     initialPassword = "luna"; # dev only — replace before anything real
     extraGroups = [ "wheel" ];
   };
-  security.sudo.wheelNeedsPassword = false; # dangerous-af: frictionless root
+  # luna.passwordlessSudo (default on) — the "dangerous-af" frictionless root that
+  # gives the agent effective root. A public consumer can flip it off.
+  security.sudo.wheelNeedsPassword = !config.luna.passwordlessSudo;
 
   # Allow unfree packages (Obsidian and friends). Personal build — we accept
   # proprietary GUI apps. Set here in the shared base so it also covers the live
@@ -43,7 +46,7 @@
   # the read-only key at /root/.ssh/luna-os_ed25519 and `nix flake update` /
   # `nixos-rebuild --flake` just work. The KEY is never baked in (it's a secret,
   # dropped per-machine like ~/.hermes); only this non-secret alias is.
-  programs.ssh.extraConfig = ''
+  programs.ssh.extraConfig = lib.mkIf config.luna.deployAlias ''
     Host github-penguin
         HostName github.com
         User git

@@ -53,16 +53,15 @@
       "locked": {
         "lastModified": 1781506636,
         "narHash": "sha256-FOLgiIJuVpYdrZWhXpY/MP6Ik6K6s2cTc+5pY9Oovds=",
-        "ref": "main",
+        "owner": "Penguinjanator",
+        "repo": "hermes-but-better",
         "rev": "2a2951d88df0ad0addc2fcbdd2f53a69c8c2269c",
-        "revCount": 11343,
-        "type": "git",
-        "url": "ssh://git@github-penguin/Penguinjanator/hermes-but-better"
+        "type": "github"
       },
       "original": {
-        "ref": "main",
-        "type": "git",
-        "url": "ssh://git@github-penguin/Penguinjanator/hermes-but-better"
+        "owner": "Penguinjanator",
+        "repo": "hermes-but-better",
+        "type": "github"
       }
     },
     "luna-desktop": {
@@ -70,16 +69,15 @@
       "locked": {
         "lastModified": 1781506656,
         "narHash": "sha256-Yr9j2XRG1bZuDfMfxVkwoh4lhCfSlYNYMnLG5SwdTGQ=",
-        "ref": "main",
+        "owner": "Penguinjanator",
+        "repo": "luna-desktop",
         "rev": "b62af780a53f42ef8034e73b0dc1c25ae12a361b",
-        "revCount": 3,
-        "type": "git",
-        "url": "ssh://git@github-penguin/Penguinjanator/luna-desktop"
+        "type": "github"
       },
       "original": {
-        "ref": "main",
-        "type": "git",
-        "url": "ssh://git@github-penguin/Penguinjanator/luna-desktop"
+        "owner": "Penguinjanator",
+        "repo": "luna-desktop",
+        "type": "github"
       }
     },
     "luna-kernel": {
@@ -87,16 +85,15 @@
       "locked": {
         "lastModified": 1781077338,
         "narHash": "sha256-iJfYuugTJ2GV7Ng/2T2t3xI350ig60WqCof0Ze+G90A=",
-        "ref": "main",
+        "owner": "Penguinjanator",
+        "repo": "luna-os-kernel",
         "rev": "86deeaf3a485696dc72738908f4fe9e81f86338b",
-        "revCount": 5,
-        "type": "git",
-        "url": "ssh://git@github-penguin/Penguinjanator/luna-os-kernel"
+        "type": "github"
       },
       "original": {
-        "ref": "main",
-        "type": "git",
-        "url": "ssh://git@github-penguin/Penguinjanator/luna-os-kernel"
+        "owner": "Penguinjanator",
+        "repo": "luna-os-kernel",
+        "type": "github"
       }
     },
     "nixpkgs": {

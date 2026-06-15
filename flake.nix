@@ -10,7 +10,7 @@
     # self-updates the same way: drop the key in, `nix flake update`. No access
     # token anywhere. ?ref=main tracks the stable branch.
     luna-kernel = {
-      url = "git+ssh://git@github-penguin/Penguinjanator/luna-os-kernel?ref=main";
+      url = "github:Penguinjanator/luna-os-kernel";
       flake = false;
     };
 
@@ -24,13 +24,13 @@
     #   nix build .#iso-lab \
     #     --override-input hermes      git+file:///home/potato/work-code/hermes-but-better \
     #     --override-input luna-kernel git+file:///home/potato/work-code/linux-master
-    hermes.url = "git+ssh://git@github-penguin/Penguinjanator/hermes-but-better?ref=main";
+    hermes.url = "github:Penguinjanator/hermes-but-better";
 
     # Luna's native face: Penguinjanator/luna-desktop (the `luna` Rust CLI today;
     # KDE/GNOME surfaces later). Same git+ssh path; a plain source repo with no
     # flake.nix, so flake = false and `${luna-desktop}/cli` is the crate.
     luna-desktop = {
-      url = "git+ssh://git@github-penguin/Penguinjanator/luna-desktop?ref=main";
+      url = "github:Penguinjanator/luna-desktop";
       flake = false;
     };
 
