@@ -18,4 +18,9 @@ let
 in
 {
   environment.systemPackages = [ lunaPlasmoid ];
+
+  # Let the plasmoid's XHR fallback read the dashboard token file — Qt blocks
+  # QML file:// reads unless this is set. The primary path is Plasma's executable
+  # data source; this covers sessions where that engine isn't available.
+  environment.sessionVariables.QML_XHR_ALLOW_FILE_READ = "1";
 }

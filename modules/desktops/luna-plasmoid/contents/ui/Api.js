@@ -24,7 +24,26 @@ function parseToken(fileContents) {
     return "";
 }
 
+// Fallback token read: pull it straight off disk with a synchronous XHR. Needs
+// QML_XHR_ALLOW_FILE_READ=1 in the session (luna-widget.nix sets it); harmless
+// if blocked. The Plasma executable data source in main.qml is the primary path
+// -- this just covers a session where that engine isn't available.
+var TOKEN_FILE = "file:///var/lib/hermes/dashboard.env";
+function _ensureToken() {
+    if (_token)
+        return;
+    try {
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", TOKEN_FILE, false);
+        xhr.send();
+        var t = parseToken(xhr.responseText);
+        if (t)
+            _token = t;
+    } catch (e) {}
+}
+
 function _open(method, path) {
+    _ensureToken();
     var xhr = new XMLHttpRequest();
     xhr.open(method, BASE + path);
     if (_token)
@@ -80,6 +99,10 @@ function deleteSession(sessionId, onDone) {
 // instead of streaming, onDone still carries the full final text.
 function streamChat(message, sessionId, onDelta, onDone, onError) {
     var xhr = _open("POST", "/api/chat");
+    if (!hasToken()) {
+        onError("no dashboard token — couldn't read /var/lib/hermes/dashboard.env");
+        return;
+    }
     xhr.setRequestHeader("Content-Type", "application/json");
     var seen = 0;   // chars of responseText already parsed
     xhr.onreadystatechange = function () {
