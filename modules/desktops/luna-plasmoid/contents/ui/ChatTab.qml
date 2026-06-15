@@ -95,29 +95,45 @@ Item {
                 width: ListView.view.width
                 height: bubble.height + Kirigami.Units.smallSpacing
                 property bool mine: model.role === "you"
+                property bool empty: model.text.length === 0
 
                 Rectangle {
                     id: bubble
-                    width: Math.min(parent.width * 0.82, label.implicitWidth + 28)
-                    height: label.implicitHeight + 20
+                    width: empty ? 56 : Math.min(parent.width * 0.82, label.implicitWidth + 28)
+                    height: empty ? 32 : label.implicitHeight + 20
                     radius: Theme.radius
                     anchors.right: mine ? parent.right : undefined
                     anchors.left: mine ? undefined : parent.left
-                    border.width: 1
-                    border.color: Theme.glassEdge
                     gradient: Gradient {
                         GradientStop { position: 0.0; color: mine ? Theme.youTop : Theme.lunaTop }
                         GradientStop { position: 1.0; color: mine ? Theme.youBot : Theme.lunaBot }
                     }
 
+                    // Aero gloss: a soft white sheen across the top half
+                    Rectangle {
+                        anchors { left: parent.left; right: parent.right; top: parent.top }
+                        height: parent.height * 0.52
+                        radius: parent.radius
+                        gradient: Gradient {
+                            GradientStop { position: 0.0; color: Qt.rgba(1, 1, 1, 0.30) }
+                            GradientStop { position: 1.0; color: Qt.rgba(1, 1, 1, 0.0) }
+                        }
+                    }
+
                     QQC2.Label {
                         id: label
+                        visible: !empty
                         anchors.fill: parent
                         anchors.margins: 10
-                        text: model.text.length ? model.text : "…"
+                        text: model.text
                         color: Theme.bubbleText
                         wrapMode: Text.Wrap
                         textFormat: Text.PlainText
+                    }
+
+                    TypingDots {
+                        visible: empty
+                        anchors.centerIn: parent
                     }
                 }
             }
@@ -133,8 +149,6 @@ Item {
                 height: input.implicitHeight + 12
                 radius: Theme.radiusSmall
                 color: Theme.glassStrong
-                border.width: 1
-                border.color: Theme.glassEdge
 
                 QQC2.TextField {
                     id: input
@@ -159,6 +173,17 @@ Item {
                 gradient: Gradient {
                     GradientStop { position: 0.0; color: Theme.accentTop }
                     GradientStop { position: 1.0; color: Theme.accentBot }
+                }
+
+                // Aero gloss sheen
+                Rectangle {
+                    anchors { left: parent.left; right: parent.right; top: parent.top }
+                    height: parent.height * 0.5
+                    radius: parent.radius
+                    gradient: Gradient {
+                        GradientStop { position: 0.0; color: Qt.rgba(1, 1, 1, 0.35) }
+                        GradientStop { position: 1.0; color: Qt.rgba(1, 1, 1, 0.0) }
+                    }
                 }
 
                 QQC2.Label {

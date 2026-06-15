@@ -86,6 +86,7 @@ PlasmoidItem {
                 spacing: Kirigami.Units.smallSpacing
 
                 LunaLogo {
+                    tint: Theme.text
                     Layout.preferredWidth: 22
                     Layout.preferredHeight: 22
                     Layout.alignment: Qt.AlignVCenter

@@ -1,52 +1,35 @@
 import QtQuick
-import "Theme.js" as Theme
+import org.kde.kirigami as Kirigami
 
-// Luna's mark: a glossy aqua orb with a white crescent moon and an Aero gloss.
-// Pure Canvas, so it scales crisply from the panel icon to a header badge.
+// Luna's mark: a flat crescent moon. Monochrome so it behaves like a standard
+// toolbar icon -- dark on light panels, light on dark -- by following the theme
+// text colour. Pass `tint` to override (e.g. the popup header wants it light).
 Canvas {
     id: logo
-    implicitWidth: 24
-    implicitHeight: 24
+    property color tint: Kirigami.Theme.textColor
+    implicitWidth: 22
+    implicitHeight: 22
 
     onPaint: {
         var ctx = getContext("2d");
         ctx.reset();
-        var w = width, h = height;
-        var cx = w / 2, cy = h / 2, r = Math.min(w, h) * 0.46;
+        var cx = width / 2, cy = height / 2, r = Math.min(width, height) * 0.44;
 
-        // glossy aqua orb
+        // a disc...
+        ctx.fillStyle = logo.tint;
         ctx.beginPath();
         ctx.arc(cx, cy, r, 0, 2 * Math.PI);
-        var orb = ctx.createLinearGradient(0, cy - r, 0, cy + r);
-        orb.addColorStop(0, Theme.accentTop);
-        orb.addColorStop(1, Theme.accentBot);
-        ctx.fillStyle = orb;
         ctx.fill();
 
-        // white crescent moon: a disc with an offset bite removed
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(cx, cy, r * 0.64, 0, 2 * Math.PI);
-        ctx.clip();
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(cx - r, cy - r, 2 * r, 2 * r);
+        // ...minus an offset disc = a clean crescent
         ctx.globalCompositeOperation = "destination-out";
         ctx.beginPath();
-        ctx.arc(cx + r * 0.34, cy - r * 0.14, r * 0.62, 0, 2 * Math.PI);
+        ctx.arc(cx + r * 0.44, cy - r * 0.16, r * 0.88, 0, 2 * Math.PI);
         ctx.fill();
-        ctx.restore();
-
-        // Aero gloss: a soft white highlight up and to the left
-        var hg = ctx.createRadialGradient(cx - r * 0.32, cy - r * 0.42, 0,
-                                          cx - r * 0.32, cy - r * 0.42, r * 1.05);
-        hg.addColorStop(0, "rgba(255,255,255,0.55)");
-        hg.addColorStop(1, "rgba(255,255,255,0.0)");
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, 2 * Math.PI);
-        ctx.fillStyle = hg;
-        ctx.fill();
+        ctx.globalCompositeOperation = "source-over";
     }
 
+    onTintChanged: requestPaint()
     onWidthChanged: requestPaint()
     onHeightChanged: requestPaint()
 }
