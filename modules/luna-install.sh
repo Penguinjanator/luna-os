@@ -5,7 +5,7 @@
 # interpolation inside an '' string. @TARGET@ is replaced at build time with the
 # system config matching this ISO (e.g. luna-os-kde).
 #
-# Two install modes, sharing finish_install (nixos-install + key copy + done):
+# Two install modes, sharing finish_install (nixos-install + done):
 #   1) erase a whole drive  -> install_whole_drive  (disko)
 #   2) dual-boot alongside an existing OS -> install_dualboot
 set -euo pipefail
@@ -80,21 +80,15 @@ pick_target_disk() {
   CHOSEN_DISK_EMPTY="${empt[$idx]}"
 }
 
-# ── Shared tail: install the system + carry the deploy key ──────────────────
+# ── Shared tail: install the system ─────────────────────────────────────────
 # Expects the new root mounted at /mnt (and ESP at /mnt/boot). $1 = boot hint.
+# luna-os is public, so nixos-install fetches every input over github: with no
+# key -- nothing to carry onto the new system.
 finish_install() {
-  local boot_disk="$1" key=/root/.ssh/luna-os_ed25519
+  local boot_disk="$1"
   echo
   echo ">>> Installing luna-os ($target) -- this builds/fetches the system ..."
   nixos-install --flake "$flake#$target" --no-root-passwd
-
-  # Keyed ISOs carry the git+ssh deploy key; copy it onto the new system so it
-  # can self-update without a manual key drop (plain 0600 root file, not store).
-  if [ -f "$key" ]; then
-    install -d -m 700 /mnt/root/.ssh
-    install -m 600 "$key" /mnt/root/.ssh/luna-os_ed25519
-    echo ">>> deploy key copied into the installed system (/root/.ssh)"
-  fi
 
   echo
   echo "  Done. Next:"
