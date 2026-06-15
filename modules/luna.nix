@@ -12,6 +12,7 @@
 {
   imports = [
     ./luna-options.nix
+    ./self-mod.nix
     ./hermes-agent.nix
     ./hermes-dashboard.nix
     ./dev.nix
